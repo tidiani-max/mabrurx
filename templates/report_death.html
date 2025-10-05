@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Laporan Kematian - MabrurX Agensi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Diadopsi dari MabrurX Agency Dashboard
+                        primary: '#1E3A8A', // Blue-800/900 for the main color
+                        accent: '#FBBF24',  // Yellow-500/400 for highlights
+                        neutral: '#4B5563', // Gray for text
+                        light: '#F9FAFB', // Light background
+                        success: '#10B981', // Green for success
+                        danger: '#EF4444',  // Red for high risk/death (Kept for the report button)
+                    },
+                    fontFamily: {
+                        // Use a consistent, modern font like Inter (Tailwind default)
+                        sans: ['Inter', 'sans-serif'], 
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="bg-light min-h-screen flex items-start justify-center font-sans antialiased">
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+        <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-10 border-t-4 border-primary">
+            <header class="mb-8 border-b pb-4">
+                <h2 class="text-3xl font-extrabold text-gray-900 flex items-center">
+                    <i class="fas fa-ambulance text-danger mr-3"></i>
+                    Daftar Laporan Kematian
+                </h2>
+                <p class="text-neutral mt-2">Ajukan laporan kematian untuk jemaah di bawah manajemen agensi Anda. **API *Backend* dinonaktifkan untuk mode presentasi.**</p>
+                
+                <div id="message-box" class="mt-4 p-4 rounded-lg hidden transition-opacity duration-300 border-l-4" role="alert">
+                    <div id="message-text" class="font-medium"></div>
+                </div>
+            </header>
+
+            <form id="reportForm" class="space-y-6">
+                
+                <div>
+                    <label for="pilgrimUid" class="block text-sm font-medium text-gray-700 mb-1">ID Registrasi Jemaah (UID)</label>
+                    <input type="text" id="pilgrimUid" name="pilgrimUid" required placeholder="Contoh: JMH-12345"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-150 uppercase">
+                    <p class="text-xs text-neutral mt-1">ID ini harus sesuai dengan ID jemaah yang dikeluarkan oleh pemerintah.</p>
+                </div>
+
+                <div>
+                    <label for="incidentDate" class="block text-sm font-medium text-gray-700 mb-1">Tanggal dan Waktu Insiden</label>
+                    <input type="datetime-local" id="incidentDate" name="incidentDate" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-150">
+                    <p class="text-xs text-neutral mt-1">Pilih tanggal dan waktu insiden (Waktu Lokal).</p>
+                </div>
+
+                <div>
+                    <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Lokasi Insiden</label>
+                    <input type="text" id="location" name="location" required placeholder="Contoh: Lokasi Tenda Mina 31A, Kamar 4"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-150">
+                </div>
+
+                <div>
+                    <label for="cause" class="block text-sm font-medium text-gray-700 mb-1">Penyebab Kematian</label>
+                    <textarea id="cause" name="cause" rows="4" required placeholder="Berikan deskripsi rinci tentang penyebab dan faktor yang berkontribusi, termasuk konteks medis apa pun."
+                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-150 resize-y"></textarea>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" id="submitButton"
+                            class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-lg font-semibold text-white bg-danger hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-primary transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        Ajukan Laporan Kematian
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+    <script>
+        const form = document.getElementById('reportForm');
+        const submitButton = document.getElementById('submitButton');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+
+        // Function to display messages in the custom message box
+        const showMessage = (type, message) => {
+            messageBox.classList.remove('hidden', 'bg-red-100', 'bg-green-100', 'border-success', 'border-danger');
+            
+            // Apply colors based on message type
+            messageBox.classList.add(
+                type === 'success' ? 'bg-green-100 border-success' : 'bg-red-100 border-danger'
+            );
+            messageText.textContent = message;
+            
+            // Auto-hide after 7 seconds
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 7000);
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const pilgrimUid = document.getElementById('pilgrimUid').value.trim().toUpperCase(); 
+            const incidentDateRaw = document.getElementById('incidentDate').value;
+            const location = document.getElementById('location').value.trim();
+            const cause = document.getElementById('cause').value.trim();
+
+            if (!pilgrimUid || !incidentDateRaw || !location || !cause) {
+                showMessage('error', 'Semua kolom wajib diisi. (All fields are required).');
+                return;
+            }
+
+            // --- STANDALONE PRESENTATION LOGIC BELOW ---
+            
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Memproses...';
+            
+            // SIMULATE API SUBMISSION TIME
+            await new Promise(resolve => setTimeout(resolve, 1500)); 
+
+            // SIMULATE SUCCESS RESPONSE
+            const mockReportId = 'RPT-' + Math.floor(Math.random() * 90000 + 10000);
+
+            showMessage(
+                'success', 
+                `✅ Berhasil! Laporan berhasil diajukan (Simulasi). ID Laporan: ${mockReportId}. Menunggu tinjauan pemerintah.`
+            );
+            
+            // Reset form fields after successful simulation
+            form.reset();
+            
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i> Ajukan Laporan Kematian';
+        });
+    </script>
+</body>
+</html>

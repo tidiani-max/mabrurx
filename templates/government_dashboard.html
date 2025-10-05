@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dasbor Pemerintah - Portal Validasi MabrurX (Simulasi API)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E40AF', 
+                        secondary: '#10B981', 
+                        accent: '#F59E0B', 
+                        neutral: '#6B7280', 
+                        light: '#F9FAFB', 
+                        danger: '#DC2626', 
+                        warning: '#FBBF24', 
+                        info: '#3B82F6', 
+                        official: '#7C3AED', 
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        #deathCertModal { z-index: 1000; }
+    </style>
+</head>
+<body class="bg-light font-sans antialiased">
+
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-primary">Mabrur<span class="text-accent">X</span></h1>
+                    <span class="ml-4 text-neutral font-medium">Portal Validasi Kementerian Agama</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="#" onclick="switchTab('overview')" class="text-primary font-semibold">Antrean Validasi</a>
+                    <a href="#" onclick="switchTab('agencies')" class="text-neutral hover:text-primary">Pengawasan Agensi</a>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-user-shield text-primary text-xl"></i>
+                        <span class="text-neutral">Admin Kementerian</span>
+                        <a href="/" class="bg-primary text-white px-3 py-1 rounded-md text-sm hover:bg-blue-700">Keluar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900">Kepatuhan Lisensi dan Catatan Resmi</h2>
+            <p class="text-neutral mt-2">Fokus pada validasi kejadian penting dan pemantauan kapasitas agensi berlisensi.</p>
+        </div>
+
+        <section id="kpi-section" class="mb-12">
+            <div id="kpi-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="col-span-4 text-center text-primary"><i class="fas fa-spinner animate-spin mr-2"></i> Memuat Indikator Kinerja Utama...</div>
+            </div>
+        </section>
+
+        <div id="dashboard-content">
+            <section id="tab-overview">
+                <h3 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-user-times mr-2 text-official"></i> Antrean Validasi Laporan Kematian
+                </h3>
+                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                    <ul id="activity-feed" class="divide-y divide-gray-200">
+                        <li class="p-4 text-center text-neutral"><i class="fas fa-spinner animate-spin mr-2"></i> Mengambil laporan validasi dari API...</li>
+                    </ul>
+                </div>
+                <div class="text-center mt-6">
+                    <button onclick="alert('Simulating batch processing of pending reports.')" class="px-6 py-2 bg-official text-white rounded-lg hover:bg-purple-800 transition">
+                        <i class="fas fa-clipboard-check mr-2"></i> Proses Semua Laporan Tertunda
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <section id="tab-agencies" class="hidden">
+            <h3 class="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-building mr-2 text-primary"></i> Tinjauan Kapasitas Agensi Berlisensi
+            </h3>
+            <div class="flex justify-end mb-4">
+                 <input type="text" id="agency-search" onkeyup="renderAgencies()" placeholder="Cari agensi..."
+                        class="w-1/3 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+            </div>
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Nama Agensi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Jemaah (Haji)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Jemaah (Umrah)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Staf Agensi</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Skor Kepatuhan</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-neutral uppercase tracking-wider">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="agency-list" class="bg-white divide-y divide-gray-200">
+                        <tr><td colspan="6" class="p-4 text-center text-neutral"><i class="fas fa-spinner animate-spin mr-2"></i> Mengambil data agensi...</td></tr>
+                    </tbody>
+                </table>
+                 <div id="no-agency-results" class="p-4 text-center text-neutral hidden">Tidak ada agensi yang cocok dengan kueri pencarian.</div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-900 text-white py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-neutral">
+            <p>&copy; 2025 MabrurX. Portal Pemerintah. Semua hak dilindungi. (Mode Simulasi API)</p>
+        </div>
+    </footer>
+
+<div id="detailModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden transform transition-all">
+        <div class="p-6">
+            <h3 class="text-2xl font-bold text-primary mb-4 border-b pb-2">Dossier Jemaah untuk Validasi</h3>
+            <div id="modalContent" class="space-y-3 text-gray-700"></div>
+            <div id="validationActions" class="mt-6 pt-4 border-t"></div>
+        </div>
+        <div class="bg-gray-50 px-6 py-3 flex justify-end">
+            <button onclick="document.getElementById('detailModal').classList.add('hidden')"
+                    class="px-4 py-2 bg-neutral text-white rounded-lg hover:bg-gray-700 transition">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<div id="deathCertModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-3/4 overflow-hidden transform transition-all flex flex-col">
+        <div class="p-4 flex justify-between items-center border-b bg-official text-white">
+            <h3 class="text-xl font-bold">SERTIFIKAT KEMATIAN RESMI</h3>
+            <button onclick="document.getElementById('deathCertModal').classList.add('hidden')" class="text-white hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6 flex-grow overflow-y-auto bg-gray-50">
+            <div class="border-4 border-official p-6 bg-white shadow-lg space-y-4">
+                <p class="text-center font-extrabold text-3xl text-official border-b-2 border-official pb-2">CATATAN PEMERINTAH MABRURX</p>
+                <p><strong>ID Sertifikat:</strong> GOV-FAT-007-2025 (Tervalidasi)</p>
+                <p><strong>UID Jemaah:</strong> <span id="cert-uid"></span></p>
+                <p><strong>Nama:</strong> <span id="cert-name"></span></p>
+                <p><strong>Agensi:</strong> <span id="cert-agency"></span></p>
+                <p><strong>Tanggal/Waktu Validasi:</strong> 2025-06-25 15:00 Waktu KSA</p>
+                <p><strong>Penyebab Kematian (Terverifikasi):</strong> Acute Myocardial Infarction (Penyebab Alami)</p>
+                <p class="mt-6 text-sm text-gray-700">Validasi resmi ini mengizinkan pemulangan/pemakaman sesuai dengan keinginan keluarga dan protokol MabrurX/Pemerintah. **Tanda Tangan Digital: [MabrurX Blockchain Hash]**</p>
+            </div>
+            <p class="text-center text-xs text-neutral mt-4">Dokumen Resmi Simulasi untuk Presentasi Pemerintah.</p>
+        </div>
+    </div>
+</div>
+
+<div id="agencyDetailModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl overflow-hidden transform transition-all">
+        <div class="p-6">
+            <h3 id="agencyModalTitle" class="text-2xl font-bold text-primary mb-4 border-b pb-2">Detail Agensi: </h3>
+            <div id="agencyModalContent" class="space-y-4 text-gray-700"></div>
+        </div>
+        <div class="bg-gray-50 px-6 py-3 flex justify-end">
+            <button onclick="document.getElementById('agencyDetailModal').classList.add('hidden')"
+                    class="px-4 py-2 bg-neutral text-white rounded-lg hover:bg-gray-700 transition">Tutup</button>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // --- Back-End Simulation (Mock Data) ---
+    // This object simulates the data stored on the server side.
+    let SERVER_DATA = {
+        agencies: [
+            { id: 'A001', name: 'IBRI-Travel', hajj: 1200, umrah: 800, staff: 20, reportsFiled: 8, reportsOngoing: 1, complianceScore: 95, contact: 'admin@IBRI-Travel.com', license: 'L001-Hajj', ongoingReports: ['P0004: Lost baggage compensation'], highRiskCount: 15 },
+            { id: 'A002', name: 'PT Amanah Tour', hajj: 2500, umrah: 1000, staff: 40, reportsFiled: 12, reportsOngoing: 3, complianceScore: 88, contact: 'support@amanahtour.id', license: 'L002-Umrah', ongoingReports: ['P0001: Death verification pending', 'P0012: Food poisoning case', 'A002-C01: Contract dispute'], highRiskCount: 25 },
+            { id: 'A003', name: 'Cahaya Abadi', hajj: 1800, umrah: 0, staff: 25, reportsFiled: 5, reportsOngoing: 0, complianceScore: 98, contact: 'info@cahayaabadi.co', license: 'L003-Hajj', ongoingReports: [], highRiskCount: 10 },
+            { id: 'A004', name: 'PT Travel Nakal', hajj: 50, umrah: 0, staff: 2, reportsFiled: 15, reportsOngoing: 6, complianceScore: 45, contact: 'abuse@travelnakal.net', license: 'L004-PENDING', ongoingReports: ['P0005: Deceased (Pending Gov. Approval)', 'A004-V03: Overcharging investigation', 'P0020: Pilgrim missing'], highRiskCount: 5 },
+            { id: 'A005', name: 'Hajj Services', hajj: 2500, umrah: 0, staff: 35, reportsFiled: 7, reportsOngoing: 1, complianceScore: 92, contact: 'ops@hajjservices.org', license: 'L005-Hajj', ongoingReports: ['P0014: Visa extension request'], highRiskCount: 18 },
+            { id: 'A006', name: 'Al-Madinah Travel', hajj: 0, umrah: 1200, staff: 8, reportsFiled: 3, reportsOngoing: 0, complianceScore: 96, contact: 'sales@almadinah.com', license: 'L006-Umrah', ongoingReports: [], highRiskCount: 8 },
+            { id: 'A007', name: 'Safwah Tours', hajj: 500, umrah: 300, staff: 10, reportsFiled: 10, reportsOngoing: 2, complianceScore: 75, contact: 'contact@safwahtours.co', license: 'L007-Hajj', ongoingReports: ['A007-V02: Sanitation complaint', 'P0018: Passport renewal delay'], highRiskCount: 12 },
+            { id: 'A008', name: 'Global Pilgrimage', hajj: 1500, umrah: 0, staff: 15, reportsFiled: 4, reportsOngoing: 1, complianceScore: 89, contact: 'global@pilgrimage.net', license: 'L008-Hajj', ongoingReports: ['P0010: Flight delay compensation'], highRiskCount: 20 },
+            { id: 'A009', name: 'Barakah Travel', hajj: 0, umrah: 1000, staff: 5, reportsFiled: 2, reportsOngoing: 0, complianceScore: 99, contact: 'info@barakahtravel.com', license: 'L009-Umrah', ongoingReports: [], highRiskCount: 7 },
+            { id: 'A010', name: 'ZamZam Journey', hajj: 971, umrah: 0, staff: 10, reportsFiled: 4, reportsOngoing: 1, complianceScore: 91, contact: 'zamzam@journey.id', license: 'L010-Hajj', ongoingReports: ['A010-V01: Document processing audit'], highRiskCount: 5 },
+        ],
+        queue: [
+            { uid: 'P0001', name: 'H. Abdullah Rahman', agency: 'PT Amanah Tour', report: 'Death Report Filed (Requires Gov. Validation)', type: 'deceased', status: 'Pending Validation' },
+            { uid: 'P0005', name: 'Nur Hidayah', agency: 'PT Travel Nakal', report: 'Death Report Filed (Agency Under Review)', type: 'deceased', status: 'Pending Validation' },
+            { uid: 'P0002', name: 'Siti Fatimah Dewi', agency: 'Cahaya Abadi', report: 'Medical Alert: High Risk Case Monitoring', type: 'high_risk', status: 'Active Monitoring' },
+        ],
+        pilgrims_dossiers: {
+            'P0001': { name: 'H. Abdullah Rahman', age: 68, risk: 'High (Deceased)', agency: 'PT Amanah Tour', location: 'Mina Camp', incident: 'Sudden cardiac arrest in Mina.' },
+            'P0005': { name: 'Nur Hidayah', age: 72, risk: 'High (Deceased)', agency: 'PT Travel Nakal', location: 'Hotel Makkah', incident: 'Fall and serious injury.' },
+            'P0002': { name: 'Siti Fatimah Dewi', age: 55, risk: 'High', agency: 'Cahaya Abadi', location: 'Hotel Al-Hijra', medical: 'Chronic Diabetes, Hypertension.' },
+        }
+    };
+    
+    // --- API FUNCTIONS (Simulated Back-End Calls) ---
+    // Simulates an API endpoint call with a delay.
+    const API_DELAY_MS = 800;
+
+    const getAgencyData = () => new Promise(resolve => setTimeout(() => resolve(SERVER_DATA.agencies), API_DELAY_MS));
+    const getValidationQueue = () => new Promise(resolve => setTimeout(() => resolve(SERVER_DATA.queue), API_DELAY_MS));
+    const getPilgrimDossier = (uid) => new Promise(resolve => setTimeout(() => resolve(SERVER_DATA.pilgrims_dossiers[uid]), API_DELAY_MS / 2));
+    
+    // This simulates the back-end processing a validation and updating the database.
+    const processDeathValidation = (uid, action) => {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                const queueItem = SERVER_DATA.queue.find(item => item.uid === uid);
+                
+                if (action === 'validate' && queueItem) {
+                    // Update main data object to reflect the change
+                    queueItem.status = 'Validated & Issued';
+                    queueItem.report = 'Death Certificate Issued';
+                    resolve({ status: 'success', message: `Official Death Certificate Issued for ${queueItem.name} (${uid}).` });
+                } else if (action === 'reject' && queueItem) {
+                    // Remove from queue
+                    SERVER_DATA.queue = SERVER_DATA.queue.filter(item => item.uid !== uid);
+                    resolve({ status: 'rejected', message: `Report Rejected for ${uid}. Requires agency follow-up.` });
+                } else {
+                    resolve({ status: 'error', message: 'Item not found in queue.' });
+                }
+            }, API_DELAY_MS); // Simulate server processing time
+        });
+    };
+
+    // --- Tab Switching Logic ---
+    async function switchTab(tabId) {
+        document.getElementById('tab-overview').classList.add('hidden');
+        document.getElementById('tab-agencies').classList.add('hidden');
+        
+        document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+        if (tabId === 'agencies') {
+            await renderAgencies();
+        } else {
+            await renderActivityFeed();
+        }
+    }
+    
+    // --- KPI Rendering ---
+    async function renderKPIs() {
+        const agencies = await getAgencyData();
+        const queue = await getValidationQueue();
+
+        const TOTAL_PILGRIMS = agencies.reduce((sum, a) => sum + a.hajj + a.umrah, 0);
+        const TOTAL_STAFF = agencies.reduce((sum, a) => sum + a.staff, 0);
+        const DEATH_QUEUE = queue.filter(a => a.type === 'deceased' && a.status === 'Pending Validation').length;
+        const AGENCIES_UNDER_REVIEW = agencies.filter(a => a.complianceScore < 70).length;
+
+        const kpiHtml = `
+            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-secondary">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-neutral uppercase tracking-wide">Total Jemaah (Haji & Umrah)</p>
+                        <p id="kpi-total-pilgrims" class="text-3xl font-bold text-gray-900 mt-1">${TOTAL_PILGRIMS.toLocaleString()}</p>
+                    </div>
+                    <div class="p-3 bg-secondary/10 rounded-full">
+                        <i class="fas fa-users text-2xl text-secondary"></i>
+                    </div>
+                </div>
+                <p class="text-sm text-neutral mt-2">Registrasi Terverifikasi</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-official cursor-pointer" onclick="switchTab('overview')">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-neutral uppercase tracking-wide">Antrean Validasi Kematian</p>
+                        <p id="kpi-death-queue" class="text-3xl font-bold text-official mt-1">${DEATH_QUEUE}</p>
+                    </div>
+                    <div class="p-3 bg-official/10 rounded-full">
+                        <i class="fas fa-crosshairs text-2xl text-official"></i>
+                    </div>
+                </div>
+                <p class="text-sm text-neutral mt-2">Laporan Menunggu Sertifikat Resmi</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-info">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-neutral uppercase tracking-wide">Total Staf Agensi</p>
+                        <p id="kpi-total-staff" class="text-3xl font-bold text-gray-900 mt-1">${TOTAL_STAFF}</p>
+                    </div>
+                    <div class="p-3 bg-info/10 rounded-full">
+                        <i class="fas fa-user-tie text-2xl text-info"></i>
+                    </div>
+                </div>
+                <p class="text-sm text-neutral mt-2">Pemandu dan dukungan Berlisensi</p>
+            </div>
+
+            <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-danger">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-neutral uppercase tracking-wide">Agensi Dalam Peninjauan</p>
+                        <p id="kpi-agencies-review" class="text-3xl font-bold text-danger mt-1">${AGENCIES_UNDER_REVIEW}</p>
+                    </div>
+                    <div class="p-3 bg-danger/10 rounded-full">
+                        <i class="fas fa-exclamation-triangle text-2xl text-danger"></i>
+                    </div>
+                </div>
+                <p class="text-sm text-neutral mt-2">Di Bawah 70% Kepatuhan</p>
+            </div>
+        `;
+        document.getElementById('kpi-cards').innerHTML = kpiHtml;
+    }
+
+
+    // --- Pilgrim Detail View (Validation Focus) ---
+    async function viewPilgrimDetails(uid, type) {
+        const data = await getPilgrimDossier(uid); // Simulate fetching dossier from back-end
+        const queueItem = SERVER_DATA.queue.find(item => item.uid === uid) || {}; // Get current queue status
+
+        const modalContent = document.getElementById('modalContent');
+        const validationActions = document.getElementById('validationActions');
+        
+        if (!data) {
+            modalContent.innerHTML = '<p class="text-danger">Error: Pilgrim dossier not found.</p>';
+            validationActions.innerHTML = '';
+            document.getElementById('detailModal').classList.remove('hidden');
+            return;
+        }
+
+        const riskColor = queueItem.status.includes('Validated') ? 'text-secondary' : queueItem.status.includes('Pending') ? 'text-danger' : 'text-warning';
+        let html = `
+            <p><strong>UID:</strong> ${uid}</p>
+            <p><strong>Nama:</strong> ${data.name}</p>
+            <p><strong>Usia:</strong> ${data.age || 'N/A'}</p>
+            <p><strong>Agensi:</strong> <span class="font-semibold text-primary">${data.agency || 'N/A'}</span></p>
+            <p><strong>Status:</strong> <span class="font-bold ${riskColor}">${queueItem.status || 'N/A'}</span></p>
+        `;
+        
+        if (data.incident) {
+            html += `<div class="mt-3 p-3 bg-red-100 border-l-4 border-danger"><strong>Laporan Agensi:</strong> ${data.incident}</div>`;
+        }
+        if (data.medical) {
+            html += `<p><strong>Riwayat Medis:</strong> ${data.medical}</p>`;
+        }
+        
+        modalContent.innerHTML = html;
+
+        // Validation Buttons Logic
+        if (type === 'deceased' && queueItem.status === 'Pending Validation') {
+            validationActions.innerHTML = `
+                <button id="validateBtn" onclick="simulateValidation('${uid}', '${data.name}', '${data.agency}', 'validate')" 
+                        class="px-4 py-2 bg-official text-white rounded-lg hover:bg-purple-800 transition mr-2">
+                    <i class="fas fa-certificate mr-1"></i> Terbitkan Sertifikat Kematian Resmi
+                </button>
+                <button id="rejectBtn" onclick="simulateValidation('${uid}', '${data.name}', '${data.agency}', 'reject')" 
+                        class="px-4 py-2 bg-danger text-white rounded-lg hover:bg-red-700 transition">
+                    <i class="fas fa-times-circle mr-1"></i> Tolak Laporan
+                </button>
+            `;
+        } else if (queueItem.status && queueItem.status.includes('Validated')) {
+             validationActions.innerHTML = `
+                <button onclick="showDeathCertModal('${uid}', '${data.name}', '${data.agency}')" 
+                        class="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-green-700 transition">
+                    <i class="fas fa-file-pdf mr-1"></i> Lihat Sertifikat Tervalidasi
+                </button>
+            `;
+        } else {
+             validationActions.innerHTML = `<p class="text-sm text-neutral">Tidak ada validasi catatan resmi yang diperlukan saat ini.</p>`;
+        }
+
+        document.getElementById('detailModal').classList.remove('hidden');
+    }
+    
+    // --- Death Certificate Simulation (Post Validation) ---
+    function showDeathCertModal(uid, name, agency) {
+        document.getElementById('cert-uid').textContent = uid;
+        document.getElementById('cert-name').textContent = name;
+        document.getElementById('cert-agency').textContent = agency;
+
+        document.getElementById('detailModal').classList.add('hidden');
+        document.getElementById('deathCertModal').classList.remove('hidden');
+    }
+    
+    // --- Validation Process (Simulates Back-end Transaction) ---
+    async function simulateValidation(uid, name, agency, action) {
+        // Disable buttons and show loading state
+        const validateBtn = document.getElementById('validateBtn');
+        const rejectBtn = document.getElementById('rejectBtn');
+        const originalText = action === 'validate' ? 'Terbitkan Sertifikat Kematian Resmi' : 'Tolak Laporan';
+        
+        if (validateBtn) validateBtn.disabled = true;
+        if (rejectBtn) rejectBtn.disabled = true;
+
+        const targetBtn = action === 'validate' ? validateBtn : rejectBtn;
+        if (targetBtn) targetBtn.innerHTML = `<i class="fas fa-spinner animate-spin mr-1"></i> Memproses...`;
+
+        // Call the simulated API
+        const response = await processDeathValidation(uid, action);
+        
+        if (response.status === 'success') {
+            alert(`BERHASIL: ${response.message}`);
+            // Re-render the UI components
+            await renderKPIs();
+            await renderActivityFeed();
+            // Show the certificate after successful validation
+            showDeathCertModal(uid, name, agency); 
+        } else if (response.status === 'rejected') {
+            alert(`LAPORAN DITOLAK: ${response.message}`);
+            // Re-render the UI components
+            await renderKPIs();
+            await renderActivityFeed();
+            document.getElementById('detailModal').classList.add('hidden');
+        } else {
+             alert(`ERROR: ${response.message}`);
+        }
+        
+        // Re-enable buttons if modal is still open (unlikely in this flow, but good practice)
+        if (validateBtn) validateBtn.disabled = false;
+        if (rejectBtn) rejectBtn.disabled = false;
+        if (targetBtn) targetBtn.innerHTML = `<i class="fas fa-${action === 'validate' ? 'certificate' : 'times-circle'} mr-1"></i> ${originalText}`;
+    }
+
+    // --- Agency Table Rendering ---
+    async function renderAgencies() {
+        const agencyList = document.getElementById('agency-list');
+        const searchInput = document.getElementById('agency-search').value.toLowerCase();
+        const noResults = document.getElementById('no-agency-results');
+
+        // Show loading state while awaiting API response
+        agencyList.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-primary"><i class="fas fa-spinner animate-spin mr-2"></i> Mengambil data agensi...</td></tr>`;
+
+        // Wait for data from simulated back-end
+        const agencies = await getAgencyData(); 
+        
+        const filteredAgencies = agencies.filter(a => a.name.toLowerCase().includes(searchInput));
+
+        if (filteredAgencies.length === 0) {
+            agencyList.innerHTML = '';
+            noResults.classList.remove('hidden');
+            return;
+        } else {
+            noResults.classList.add('hidden');
+        }
+
+        const agencyHTML = filteredAgencies.map(agency => {
+            const scoreColor = agency.complianceScore >= 90 ? 'text-secondary' : agency.complianceScore >= 70 ? 'text-warning' : 'text-danger';
+            const riskBg = agency.complianceScore < 70 ? 'bg-red-50/50' : '';
+
+            return `
+                <tr class="${riskBg}">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary">${agency.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary">${agency.hajj.toLocaleString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-info">${agency.umrah.toLocaleString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral">${agency.staff}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${scoreColor} font-bold">${agency.complianceScore}%</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="#" onclick="event.preventDefault(); viewAgencyDetails('${agency.id}')" class="text-primary hover:text-blue-700">
+                            Lihat Kepatuhan
+                        </a>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        agencyList.innerHTML = agencyHTML;
+    }
+
+    // --- Activity Feed Rendering ---
+    async function renderActivityFeed() {
+        const activityFeed = document.getElementById('activity-feed');
+        // Show loading state
+        activityFeed.innerHTML = `<li class="p-4 text-center text-primary"><i class="fas fa-spinner animate-spin mr-2"></i> Mengambil laporan validasi dari API...</li>`;
+
+        // Wait for data from simulated back-end
+        const queue = await getValidationQueue(); 
+        
+        const activityHTML = queue.map(activity => {
+            const iconClass = activity.type === 'deceased' ? 'fas fa-skull text-danger' : 'fas fa-heartbeat text-warning';
+            const actionText = activity.type === 'deceased' && activity.status === 'Pending Validation' ? 'Validasi Kematian' : activity.status.includes('Validated') ? 'Lihat Sertifikat' : 'Lihat Dossier';
+
+            return `
+                <li class="p-4 hover:bg-gray-50 transition-colors ${activity.status.includes('Validated') ? 'bg-green-50' : activity.type === 'deceased' ? 'bg-red-50' : ''}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <i class="${iconClass} text-lg"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">${activity.report} <span class="text-xs text-official font-bold">(${activity.status})</span></p>
+                                <p class="text-sm text-neutral">Jemaah: ${activity.name} (${activity.uid}) | Agensi: ${activity.agency}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <a href="#" 
+                               onclick="event.preventDefault(); viewPilgrimDetails('${activity.uid}', '${activity.type}')"
+                               class="text-sm text-official hover:underline">
+                                ${actionText}
+                            </a>
+                        </div>
+                    </div>
+                </li>
+            `;
+        }).join('');
+
+        activityFeed.innerHTML = activityHTML.length > 0 
+            ? activityHTML 
+            : '<li class="p-4 text-center text-secondary font-semibold"><i class="fas fa-check-circle mr-2"></i> Antrean kosong! Semua sertifikat kematian telah diproses.</li>';
+    }
+    
+    // --- Execution on Load ---
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Initial simultaneous data fetch for KPIs and the default tab
+        await renderKPIs();
+        await renderActivityFeed();
+        
+        // The agency detail logic also relies on the back-end simulation (not shown here, but implemented in the viewAgencyDetails function)
+        async function viewAgencyDetails(agencyId) {
+            const agencies = await getAgencyData();
+            const agency = agencies.find(a => a.id === agencyId);
+            if (!agency) return;
+
+            document.getElementById('agencyModalTitle').textContent = `Detail Agensi: ${agency.name}`;
+            
+            const complianceColor = agency.complianceScore >= 90 ? 'text-secondary' : agency.complianceScore >= 70 ? 'text-warning' : 'text-danger';
+            
+            let contentHTML = `
+                <div class="grid grid-cols-3 gap-4 border-b pb-4">
+                    <div>
+                        <p class="text-xs text-neutral">Skor Kepatuhan</p>
+                        <p class="font-bold ${complianceColor} text-xl">${agency.complianceScore}%</p>
+                    </div>
+                     <div>
+                        <p class="text-xs text-neutral">Status Lisensi</p>
+                        <p class="font-bold text-secondary">${agency.license}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-neutral">Total Staf Terdaftar</p>
+                        <p class="font-bold text-info text-xl">${agency.staff}</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 pt-4">
+                    <div>
+                        <p class="text-sm text-neutral font-semibold mb-2">Statistik Kinerja</p>
+                        <ul class="space-y-1">
+                            <li><i class="fas fa-users text-secondary mr-2"></i> Kapasitas Haji: <span class="font-medium">${agency.hajj.toLocaleString()}</span></li>
+                            <li><i class="fas fa-mosque text-info mr-2"></i> Kapasitas Umrah: <span class="font-medium">${agency.umrah.toLocaleString()}</span></li>
+                            <li><i class="fas fa-file-alt text-primary mr-2"></i> Laporan Diajukan: <span class="font-medium">${agency.reportsFiled}</span></li>
+                            <li><i class="fas fa-user-injured text-danger mr-2"></i> Kasus Risiko Tinggi (Terpantau): <span class="font-medium">${agency.highRiskCount}</span></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p class="text-sm text-neutral font-semibold mb-2">Laporan dan Insiden Berjalan</p>
+                        <ul class="space-y-1">
+                            ${agency.ongoingReports.length > 0 ? agency.ongoingReports.map(report => `
+                                <li class="text-sm text-warning"><i class="fas fa-exclamation-circle mr-2"></i> ${report}</li>
+                            `).join('') : '<li class="text-sm text-secondary">Semua insiden telah diselesaikan.</li>'}
+                        </ul>
+                        <div class="mt-4 p-3 bg-gray-100 rounded-md">
+                            <p class="text-xs text-neutral">Kontak Resmi Agensi:</p>
+                            <p class="text-sm font-medium text-primary">${agency.contact}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('agencyModalContent').innerHTML = contentHTML;
+            document.getElementById('agencyDetailModal').classList.remove('hidden');
+        }
+    });
+
+</script>
+</body>
+</html>

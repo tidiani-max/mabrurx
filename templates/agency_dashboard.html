@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IBRI-Travel Agency Dashboard - MabrurX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Diadopsi dari beranda MabrurX
+                        primary: '#1E3A8A', // Blue-800/900 for the main color
+                        accent: '#FBBF24',  // Yellow-500/400 for highlights
+                        neutral: '#4B5563', // Gray for text
+                        light: '#F9FAFB', // Light background
+                        success: '#10B981', // Green for success/low risk
+                        warning: '#F59E0B', // Orange for pending/medium risk
+                        danger: '#EF4444',  // Red for high risk/deceased
+                        official: '#7C3AED', // Added for clarity (Government document)
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Memastikan modal berada di atas segalanya */
+        #detailModal, #kpiModal, #documentModal { z-index: 1000; }
+        /* Scrollbar kustom */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="bg-light font-sans antialiased">
+
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-primary">Mabrur<span class="text-accent">X</span></h1>
+                    <span class="ml-4 text-neutral font-medium">Dasbor Agensi</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="#" class="text-primary font-semibold">Dasbor</a>
+                    <a href="/register_Pilgrim_form/" class="text-neutral hover:text-primary">Daftar Jemaah</a> 
+                    <a href="/laporan/new" class="text-neutral hover:text-primary">Lapor Kematian</a>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-user-tie text-primary text-xl"></i>
+                        <span class="text-neutral font-semibold">Admin IBRI-Travel</span>
+                        <a href="/login" class="bg-accent text-gray-900 px-3 py-1 rounded-md text-sm hover:bg-yellow-600 transition">Keluar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900">Ikhtisar Manajemen Jemaah</h2>
+            
+        </div>
+
+        <section class="mb-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-primary">
+                    <p class="text-sm font-medium text-neutral uppercase tracking-wide">Total Jemaah</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1">20</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-danger cursor-pointer" 
+                    onclick="showKpiDetails('Jemaah Berisiko Tinggi', 2, ['Jemaah P002 (Diabetes Kronis)', 'Jemaah P012 (Hipertensi, mobilitas terbatas)'])">
+                    <p class="text-sm font-medium text-neutral uppercase tracking-wide">Jemaah Berisiko Tinggi</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1 text-danger">2</p>
+                    <p class="text-xs text-neutral mt-2">Klik untuk melihat daftar</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-warning cursor-pointer"
+                    onclick="showKpiDetails('Laporan Diajukan (Total 5)', 5, ['Laporan Kematian P007 (TERVERIFIKASI PEMERINTAH)', 'Darurat Medis P002 (Tertunda)', 'Peringatan Lokasi P004 (Ditutup)', 'Pengajuan Dokumen P010 (Disetujui)', 'Perubahan Jadwal Perjalanan P015 (Tertunda)'])">
+                    <p class="text-sm font-medium text-neutral uppercase tracking-wide">Laporan Diajukan (Total 5)</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1 text-warning">5</p>
+                    <p class="text-xs text-neutral mt-2">Klik untuk melihat status</p>
+                </div>
+            </div>
+        </section>
+        
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
+            <div class="w-full sm:w-1/3">
+                <input type="text" id="search-input" onkeyup="renderPilgrims(1)" placeholder="Cari berdasarkan Nama atau UID..."
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+            </div>
+            <div class="flex space-x-4">
+                <select id="filter-risk" onchange="renderPilgrims(1)" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    <option value="All">Filter Berdasarkan Risiko: Semua</option>
+                    <option value="Low">Risiko Rendah</option>
+                    <option value="High">Risiko Tinggi</option>
+                </select>
+                <select id="filter-status" onchange="renderPilgrims(1)" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    <option value="All">Filter Berdasarkan Status: Semua</option>
+                    <option value="Active">Aktif</option>
+                    <option value="Deceased">Meninggal</option>
+                </select>
+            </div>
+        </div>
+
+        <section>
+            <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-list-ul mr-2 text-primary"></i> Daftar Jemaah
+            </h3>
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">UID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Nama</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Usia</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Tingkat Risiko</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-neutral uppercase tracking-wider">Tindakan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pilgrim-list" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+                <div id="no-results" class="p-4 text-center text-neutral hidden">Tidak ada jemaah yang cocok dengan filter atau kueri pencarian saat ini.</div>
+            </div>
+
+            <div id="pagination-controls" class="flex justify-between items-center mt-4">
+                </div>
+        </section>
+    </main>
+
+    <footer class="bg-primary text-white py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-300">
+            <p>&copy; 2025 IBRI-Travel Agency. Ditenagai oleh MabrurX. Semua hak dilindungi. (Mode Presentasi)</p>
+        </div>
+    </footer>
+
+<div id="detailModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden transform transition-all">
+        <div class="p-6">
+            <h3 class="text-2xl font-bold text-primary mb-4 border-b pb-2">Detail Jemaah</h3>
+            <div id="modalContent" class="space-y-3 text-gray-700">
+                </div>
+        </div>
+        <div class="bg-gray-50 px-6 py-3 flex justify-end">
+            <button onclick="document.getElementById('detailModal').classList.add('hidden')"
+                    class="px-4 py-2 bg-neutral text-white rounded-lg hover:bg-gray-700 transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="kpiModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden transform transition-all">
+        <div class="p-6">
+            <h3 id="kpiModalTitle" class="text-xl font-bold text-primary mb-4 border-b pb-2"></h3>
+            <div id="kpiModalContent" class="space-y-2 text-gray-700">
+                </div>
+        </div>
+        <div class="bg-gray-50 px-6 py-3 flex justify-end">
+            <button onclick="document.getElementById('kpiModal').classList.add('hidden')"
+                    class="px-4 py-2 bg-accent text-gray-900 font-semibold rounded-lg hover:bg-yellow-600 transition">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="documentModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-3/4 overflow-hidden transform transition-all flex flex-col">
+        <div class="p-4 flex justify-between items-center border-b bg-official text-white">
+            <h3 class="text-xl font-bold">SERTIFIKAT KEMATIAN RESMI PEMERINTAH</h3>
+            <button onclick="document.getElementById('documentModal').classList.add('hidden')" class="text-white hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6 flex-grow overflow-y-auto bg-gray-50">
+            <div class="border-4 border-official p-6 bg-white shadow-lg space-y-4">
+                <p class="text-center font-extrabold text-3xl text-official border-b-2 border-official pb-2">CATATAN PEMERINTAH MABRURX</p>
+                <p><strong>ID Sertifikat:</strong> GOV-FAT-007-2025</p>
+                <p><strong>UID Jemaah:</strong> <span id="doc-uid">P007</span></p>
+                <p><strong>Nama:</strong> <span id="doc-name">H. Zulkifli</span></p>
+                <p><strong>Agensi:</strong> IBRI-Travel</p>
+                <p><strong>Tanggal Kematian:</strong> 2025-06-25 14:30 Waktu KSA</p>
+                <p><strong>Lokasi:</strong> Mina, Bagian Kamp Tenda 4B</p>
+                <p><strong>Penyebab Kematian (Terverifikasi Pemerintah):</strong> Infark Miokard Akut (Serangan Jantung) karena sebab alami.</p>
+                <p class="mt-4 text-sm text-gray-600">Validasi resmi ini mengizinkan pemulangan/pemakaman sesuai keinginan keluarga dan protokol MabrurX/Pemerintah. **Tanda Tangan Digital: [Hash Blockchain MabrurX]**</p>
+                <p class="text-right font-bold text-gray-800 pt-4">Diverifikasi oleh: Kementerian Haji & Umrah Arab Saudi</p>
+            </div>
+            <p class="text-center text-xs text-neutral mt-4">Catatan: Ini adalah dokumen simulasi untuk tujuan presentasi.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Mock Data: 20 Pilgrims for IBRI-Travel ---
+    const MOCK_PILGRIMS = [
+        { uid: 'P001', name: 'Ahmad Mustofa', age: 45, risk: 'Low', status: 'Active', package: 'Hajj Reguler', contact: '08123456789' },
+        { uid: 'P002', name: 'Siti Fatimah Dewi', age: 62, risk: 'High', status: 'Active', package: 'Hajj Khusus', medical_note: 'Chronic Diabetes, requires daily checkup.' },
+        { uid: 'P003', name: 'Muhammad Alif', age: 31, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
+        { uid: 'P004', name: 'Nurul Huda', age: 50, risk: 'Low', status: 'Active', package: 'Hajj Khusus' },
+        { uid: 'P005', name: 'Joko Widodo', age: 48, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
+        { uid: 'P006', name: 'Dewi Lestari', age: 39, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
+        // P007 is the deceased pilgrim whose death certificate is available
+        { uid: 'P007', name: 'H. Zulkifli', age: 75, risk: 'High', status: 'Deceased', package: 'Hajj Khusus', incident: 'Sudden respiratory failure (Mina). **Government Verified.**' },
+        { uid: 'P008', name: 'Rina Sari', age: 29, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
+        { uid: 'P009', name: 'Bambang Susilo', age: 55, risk: 'Low', status: 'Active', package: 'Hajj Khusus' },
+        { uid: 'P010', name: 'Sri Mulyani', age: 60, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
+        { uid: 'P011', name: 'Andi Pratama', age: 33, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
+        { uid: 'P012', name: 'Hj. Aminah Yahya', age: 70, risk: 'High', status: 'Active', package: 'Hajj Khusus', medical_note: 'Hypertension, mobility limited.' },
+        { uid: 'P013', name: 'Faisal Akbar', age: 42, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
+        { uid: 'P014', name: 'Eka Putri', age: 25, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
+        { uid: 'P015', name: 'Heru Budiman', age: 58, risk: 'Low', status: 'Active', package: 'Hajj Khusus' },
+        { uid: 'P016', name: 'Linda Sari', age: 47, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
+        { uid: 'P017', name: 'Cahyo Wibowo', age: 36, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
+        { uid: 'P018', name: 'Irma Handayani', age: 53, risk: 'Low', status: 'Active', package: 'Hajj Khusus' },
+        { uid: 'P019', name: 'Kusuma Negara', age: 68, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
+        { uid: 'P020', name: 'Zahra Kemala', age: 41, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
+    ];
+
+    const ITEMS_PER_PAGE = 10;
+    let currentPage = 1;
+
+    // --- Detail View Simulation Function (Updated for Document Link) ---
+    function viewDetails(uid) {
+        const data = MOCK_PILGRIMS.find(p => p.uid === uid);
+        const modalContent = document.getElementById('modalContent');
+        
+        if (!data) {
+            modalContent.innerHTML = `<p class="text-danger">Kesalahan: Detail Jemaah untuk UID ${uid} tidak ditemukan.</p>`;
+        } else {
+            const statusColor = data.status === 'Deceased' ? 'text-danger' : 'text-primary';
+            const riskColor = data.risk === 'High' ? 'text-danger' : 'text-success';
+            
+            // Terjemahkan Teks di Modal
+            const statusText = data.status === 'Deceased' ? 'Meninggal' : 'Aktif';
+            const riskText = data.risk === 'High' ? 'Tinggi' : 'Rendah';
+            
+            let html = `
+                <p><strong>UID:</strong> <span class="text-gray-900">${data.uid}</span></p>
+                <p><strong>Nama:</strong> <span class="text-gray-900">${data.name}</span></p>
+                <p><strong>Usia:</strong> ${data.age}</p>
+                <p><strong>Status:</strong> <span class="${statusColor} font-semibold">${statusText}</span></p>
+                <p><strong>Tingkat Risiko:</strong> <span class="${riskColor} font-semibold">${riskText}</span></p>
+                <p><strong>Paket:</strong> ${data.package}</p>
+            `;
+            
+            if (data.medical_note) {
+                html += `<div class="p-3 mt-4 bg-red-50 border-l-4 border-danger"><p class="font-semibold text-danger">Catatan Medis:</p><p class="text-red-600 text-sm">${data.medical_note.replace('Chronic Diabetes, requires daily checkup.', 'Diabetes Kronis, memerlukan pemeriksaan harian.').replace('Hypertension, mobility limited.', 'Hipertensi, mobilitas terbatas.')}</p></div>`;
+            }
+            if (data.incident) {
+                const incidentText = data.incident
+                    .replace('Sudden respiratory failure (Mina). **Government Verified.**', 'Gagal napas mendadak (Mina). **Terverifikasi Pemerintah.**')
+                    .replace('Government Verified', 'Terverifikasi Pemerintah');
+                
+                html += `<div class="p-3 mt-4 bg-gray-100 border-l-4 border-neutral"><p class="font-semibold text-gray-700">Laporan Insiden (Pengajuan Agensi):</p><p class="text-gray-600 text-sm">${incidentText}</p></div>`;
+                
+                // **NEW: Check for government verified status to show the document button**
+                if (data.status === 'Deceased' && data.incident.includes('Government Verified')) {
+                    html += `
+                        <div class="mt-4 text-center">
+                            <a href="#" onclick="event.preventDefault(); showDocumentModal('${data.uid}', '${data.name}')" 
+                                class="inline-block px-6 py-2 bg-official text-white rounded-lg hover:bg-purple-700 font-semibold transition">
+                                <i class="fas fa-file-contract mr-2"></i> Lihat Sertifikat Kematian Pemerintah
+                            </a>
+                        </div>`;
+                } else if (data.status === 'Deceased') {
+                    html += `<p class="mt-4 text-center text-warning font-semibold">Laporan Kematian Diajukan. Menunggu verifikasi/penerbitan Pemerintah.</p>`;
+                }
+            }
+
+            modalContent.innerHTML = html;
+        }
+
+        document.getElementById('detailModal').classList.remove('hidden');
+    }
+
+    // --- KPI Details Simulation Function ---
+    function showKpiDetails(title, count, detailsArray) {
+        document.getElementById('kpiModalTitle').textContent = `${title} (${count} item)`;
+        
+        // Terjemahkan konten detail
+        const translatedDetails = detailsArray.map(item => {
+             // Contoh terjemahan yang disederhanakan, pastikan semua kasus di-handle jika perlu
+             return item
+                .replace('High Risk Pilgrims', 'Jemaah Berisiko Tinggi')
+                .replace('Reports Filed', 'Laporan Diajukan')
+                .replace('Chronic Diabetes', 'Diabetes Kronis')
+                .replace('limited mobility', 'mobilitas terbatas')
+                .replace('Death Report', 'Laporan Kematian')
+                .replace('Medical Emergency', 'Darurat Medis')
+                .replace('Location Alert', 'Peringatan Lokasi')
+                .replace('Document Submission', 'Pengajuan Dokumen')
+                .replace('Travel Itinerary Change', 'Perubahan Jadwal Perjalanan')
+                .replace('(Pending)', '(Tertunda)')
+                .replace('(Closed)', '(Ditutup)')
+                .replace('(Approved)', '(Disetujui)')
+                .replace('(GOV VERIFIED)', '(TERVERIFIKASI PEMERINTAH)');
+        });
+        
+        document.getElementById('kpiModalContent').innerHTML = `
+            <p class="text-sm font-semibold text-primary">Ringkasan:</p>
+            <ul class="list-disc list-inside space-y-1 text-sm">
+                ${translatedDetails.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+        `;
+        document.getElementById('kpiModal').classList.remove('hidden');
+    }
+    
+    // --- Government Document Simulation (Updated to inject name/uid) ---
+    function showDocumentModal(uid, name) {
+        // Set document details based on the pilgrim data
+        document.getElementById('doc-uid').textContent = uid;
+        document.getElementById('doc-name').textContent = name;
+        
+        document.getElementById('detailModal').classList.add('hidden'); // Hide details first
+        document.getElementById('documentModal').classList.remove('hidden');
+    }
+
+    // --- Main Rendering Function (Includes Filter, Search, Pagination) ---
+    function renderPilgrims(page) {
+        currentPage = page;
+        const pilgrimList = document.getElementById('pilgrim-list');
+        const searchInput = document.getElementById('search-input').value.toLowerCase();
+        const filterRisk = document.getElementById('filter-risk').value;
+        const filterStatus = document.getElementById('filter-status').value;
+        const noResults = document.getElementById('no-results');
+
+        // 1. FILTERING & SEARCHING
+        const filteredPilgrims = MOCK_PILGRIMS.filter(p => {
+            const nameMatch = p.name.toLowerCase().includes(searchInput) || p.uid.toLowerCase().includes(searchInput);
+            const riskMatch = filterRisk === 'All' || p.risk === filterRisk;
+            const statusMatch = filterStatus === 'All' || p.status === filterStatus;
+            return nameMatch && riskMatch && statusMatch;
+        });
+
+        // Show/hide no results message
+        if (filteredPilgrims.length === 0) {
+            pilgrimList.innerHTML = '';
+            noResults.classList.remove('hidden');
+            document.getElementById('pagination-controls').innerHTML = '';
+            return;
+        } else {
+            noResults.classList.add('hidden');
+        }
+
+        // 2. PAGINATION
+        const totalPages = Math.ceil(filteredPilgrims.length / ITEMS_PER_PAGE);
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        const pilgrimsToShow = filteredPilgrims.slice(startIndex, endIndex);
+
+
+        // 3. RENDERING
+        const pilgrimHTML = pilgrimsToShow.map(pilgrim => {
+            const riskColorClass = pilgrim.risk === 'High' ? 'text-danger font-semibold' : 'text-success';
+            const statusColorClass = pilgrim.status === 'Deceased' ? 'text-danger font-semibold' : 'text-primary';
+            
+            const statusText = pilgrim.status === 'Deceased' ? 'Meninggal' : 'Aktif';
+            const riskText = pilgrim.risk === 'High' ? 'Tinggi' : 'Rendah';
+            
+            return `
+                <tr class="${pilgrim.status === 'Deceased' ? 'bg-red-50/50' : ''}">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${pilgrim.uid}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${pilgrim.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${pilgrim.age}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusColorClass}">${statusText}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${riskColorClass}">${riskText}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="#" 
+                            onclick="event.preventDefault(); viewDetails('${pilgrim.uid}')"
+                            class="text-primary hover:text-blue-700">
+                            Lihat Detail
+                        </a>
+                        ${pilgrim.status === 'Deceased' ? '<i class="fas fa-file-contract ml-2 text-official" title="Sertifikat Pemerintah Tersedia"></i>' : ''}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        pilgrimList.innerHTML = pilgrimHTML;
+        
+        // 4. RENDER PAGINATION CONTROLS
+        const controls = document.getElementById('pagination-controls');
+        const rangeEnd = Math.min(endIndex, filteredPilgrims.length);
+        const infoText = `Menampilkan ${startIndex + 1} hingga ${rangeEnd} dari ${filteredPilgrims.length} entri (Halaman ${currentPage} dari ${totalPages})`;
+        
+        let paginationHTML = `<div class="text-sm text-neutral">${infoText}</div><div class="space-x-2">`;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            const activeClass = i === currentPage ? 'bg-primary text-white' : 'bg-white text-primary hover:bg-gray-100';
+            paginationHTML += `<button onclick="renderPilgrims(${i})" class="px-3 py-1 border border-gray-300 rounded-lg ${activeClass}">${i}</button>`;
+        }
+        paginationHTML += '</div>';
+        controls.innerHTML = paginationHTML;
+    }
+
+    // --- Initial Execution on Load ---
+    document.addEventListener('DOMContentLoaded', () => renderPilgrims(1));
+</script>
+</body>
+</html>

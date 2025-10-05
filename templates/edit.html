@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pendaftaran Jamaah Baru | MabrurX</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .input-field {
+      @apply w-full px-4 py-3 border border-gray-300 rounded-xl bg-white 
+      focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition duration-150;
+    }
+    .btn {
+      @apply px-6 py-3 rounded-xl font-semibold shadow-md transition duration-150;
+    }
+    .btn-primary {
+      @apply bg-yellow-500 text-white hover:bg-yellow-600;
+    }
+    .btn-secondary {
+      @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+    }
+    .btn-success {
+      @apply bg-green-600 text-white hover:bg-green-700;
+    }
+  </style>
+</head>
+<body class="bg-[#F7EEE2] min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="bg-[#0B3C6B] text-white shadow-md">
+    <div class="w-full px-8 py-5 flex items-center justify-between">
+      <h1 class="text-2xl font-extrabold">🕋 MabrurX</h1>
+      <span class="text-sm font-light">Formulir Pendaftaran Jamaah Baru</span>
+    </div>
+  </header>
+
+  <!-- PROGRESS BAR -->
+  <div class="bg-white shadow">
+    <div class="w-full h-2 bg-gray-200">
+      <div id="progressBar" class="h-2 bg-yellow-400 transition-all duration-500" style="width: 33%;"></div>
+    </div>
+    <div class="flex justify-around py-3 text-sm font-semibold">
+      <span id="tab1" class="text-yellow-600">1. Identitas</span>
+      <span id="tab2" class="text-gray-400">2. Kesehatan</span>
+      <span id="tab3" class="text-gray-400">3. Konfirmasi</span>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1">
+    <form id="pilgrimForm" class="h-full novalidate">
+      {% csrf_token %}
+
+      <!-- STEP 1 -->
+      <section id="step1" class="h-full flex flex-col justify-between p-10">
+        <div>
+          <h2 class="text-3xl font-bold text-[#0B3C6B] mb-8">🧾 Identitas Jamaah</h2>
+          <div class="grid grid-cols-2 gap-6">
+
+            <input type="text" name="full_name" required placeholder="Nama Lengkap Jamaah" class="input-field">
+            <input type="email" name="email" required placeholder="Alamat Email" class="input-field">
+
+            <input type="text" name="nik" maxlength="16" placeholder="Nomor NIK (16 digit)" required class="input-field">
+            <input type="text" name="passport" placeholder="Nomor Paspor (contoh: A9876543)" class="input-field">
+
+            <div>
+              <label class="text-sm text-gray-600">Tanggal Lahir</label>
+              <input type="date" name="birth_date" required class="input-field">
+            </div>
+            <select name="gender" required class="input-field">
+              <option value="">Pilih Jenis Kelamin</option>
+              <option value="laki-laki">Laki-laki</option>
+              <option value="perempuan">Perempuan</option>
+            </select>
+
+            <select name="tripType" id="tripType" required class="input-field">
+              <option value="">Pilih Jenis Perjalanan</option>
+              <option value="HAJJ">Haji</option>
+              <option value="UMRAH">Umrah</option>
+            </select>
+            <input type="text" name="tripPeriod" placeholder="Periode Keberangkatan (contoh: 2026)" class="input-field">
+            <input type="text" name="tripStatus" placeholder="Status Perjalanan (contoh: Dalam Proses)" class="input-field">
+            <input type="tel" name="phone" required placeholder="Nomor Telepon (+62...)" class="input-field">
+
+            <!-- ADDRESS SECTION -->
+            <div class="col-span-2 mt-4">
+              <h3 class="text-xl font-semibold text-[#0B3C6B] mb-2">🏠 Alamat Lengkap</h3>
+              <div class="grid grid-cols-2 gap-4">
+                <input type="text" name="street" placeholder="Nama Jalan" class="input-field">
+                <input type="text" name="rtRw" placeholder="RT/RW (contoh: 004/006)" class="input-field">
+                <input type="text" name="kelurahanDesa" placeholder="Kelurahan/Desa" class="input-field">
+                <input type="text" name="kecamatan" placeholder="Kecamatan" class="input-field">
+                <input type="text" name="kotaKabupaten" placeholder="Kota/Kabupaten" class="input-field">
+                <input type="text" name="provinsi" placeholder="Provinsi" class="input-field">
+                <input type="text" name="postalCode" placeholder="Kode Pos" class="input-field">
+                <input type="text" name="map" placeholder="Tautan Peta Google (opsional)" class="input-field">
+              </div>
+            </div>
+
+          </div>
+        </div>
+        <div class="flex justify-end mt-10">
+          <button type="button" id="next1" class="btn btn-primary">Lanjut ke Kesehatan →</button>
+        </div>
+      </section>
+
+      <!-- STEP 2 -->
+      <section id="step2" class="h-full flex flex-col justify-between p-10 hidden">
+        <div>
+          <h2 class="text-3xl font-bold text-[#0B3C6B] mb-6">⚕️ Informasi Kesehatan</h2>
+          <div class="grid grid-cols-2 gap-6">
+            <input type="text" name="conditionName" placeholder="Kondisi Medis (contoh: Diabetes)" class="input-field">
+            <input type="text" name="bloodType" placeholder="Golongan Darah (contoh: B+)" class="input-field">
+            <textarea name="medical_conditions" placeholder="Keterangan tambahan kondisi medis" class="input-field h-24 col-span-2"></textarea>
+            <textarea name="allergies" placeholder="Alergi (contoh: Obat, Makanan)" class="input-field h-24 col-span-2"></textarea>
+            <select name="risk_level" class="input-field col-span-2" required>
+              <option value="">Pilih Tingkat Risiko</option>
+              <option value="LOW">Rendah</option>
+              <option value="MEDIUM">Sedang</option>
+              <option value="HIGH">Tinggi</option>
+            </select>
+            <div>
+              <label class="text-sm text-gray-600">Tanggal Pemeriksaan Kesehatan</label>
+              <input type="date" name="exam_date" class="input-field">
+            </div>
+          </div>
+
+          <!-- ACTIVITY LOGS -->
+          <div class="bg-white border rounded-xl p-4 shadow mt-8" id="activityLogsBox">
+            <h4 class="text-lg font-semibold text-[#0B3C6B]" id="activityTitle">📘 Catatan Aktivitas</h4>
+            <div id="activityLogsContainer" class="space-y-2 mt-2"></div>
+            <button type="button" id="addActivityLog" class="text-yellow-600 text-sm font-medium hover:text-yellow-700 mt-2">+ Tambah Aktivitas</button>
+          </div>
+        </div>
+
+        <div class="flex justify-between mt-10">
+          <button type="button" id="prev2" class="btn btn-secondary">← Kembali</button>
+          <button type="button" id="next2" class="btn btn-primary">Lanjut ke Konfirmasi →</button>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section id="step3" class="h-full flex flex-col justify-between p-10 hidden">
+        <div>
+          <h2 class="text-3xl font-bold text-[#0B3C6B] mb-6">✅ Konfirmasi Data Jamaah</h2>
+          <div id="confirmation" class="grid grid-cols-2 gap-6 text-base text-gray-700 bg-white p-6 rounded-xl shadow-md"></div>
+          <p class="text-center text-red-500 mt-6 font-semibold">Pastikan semua data benar sebelum menyimpan!</p>
+        </div>
+        <div class="flex justify-between mt-10">
+          <button type="button" id="prev3" class="btn btn-secondary">← Kembali</button>
+          <button type="submit" id="submitBtn" class="btn btn-success">💾 Simpan Data</button>
+        </div>
+      </section>
+    </form>
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("pilgrimForm");
+      const steps = [step1, step2, step3];
+      const progressBar = document.getElementById("progressBar");
+      let current = 0;
+
+      function showStep(i) {
+        steps.forEach((s, j) => s.classList.toggle("hidden", j !== i));
+        progressBar.style.width = `${(i + 1) * 33}%`;
+        current = i;
+      }
+      showStep(0);
+
+      next1.onclick = () => showStep(1);
+      prev2.onclick = () => showStep(0);
+      next2.onclick = () => { fillConfirm(); showStep(2); };
+      prev3.onclick = () => showStep(1);
+
+      // Activity logs
+      const activityContainer = document.getElementById("activityLogsContainer");
+      addActivityLog.onclick = () => {
+        const div = document.createElement("div");
+        div.className = "grid grid-cols-3 gap-2";
+        div.innerHTML = `
+          <input type="text" placeholder="Nama Aktivitas" class="input-field">
+          <input type="date" class="input-field">
+          <select class="input-field">
+            <option value="">Status</option>
+            <option value="completed">Selesai</option>
+            <option value="not_started">Belum Dimulai</option>
+          </select>`;
+        activityContainer.appendChild(div);
+      };
+
+      function fillConfirm() {
+        const c = document.getElementById("confirmation");
+        c.innerHTML = `
+          <p><b>Nama:</b> ${form.full_name.value}</p>
+          <p><b>Email:</b> ${form.email.value}</p>
+          <p><b>NIK:</b> ${form.nik.value}</p>
+          <p><b>Paspor:</b> ${form.passport.value}</p>
+          <p><b>Tgl Lahir:</b> ${form.birth_date.value}</p>
+          <p><b>Jenis Kelamin:</b> ${form.gender.value}</p>
+          <p><b>Telepon:</b> ${form.phone.value}</p>
+          <p><b>Jenis Perjalanan:</b> ${form.tripType.value}</p>
+          <p><b>Periode:</b> ${form.tripPeriod.value}</p>
+          <p><b>Status:</b> ${form.tripStatus.value}</p>
+          <p><b>Alamat:</b> ${form.street.value}, ${form.rtRw.value}, ${form.kelurahanDesa.value}, ${form.kecamatan.value}, ${form.kotaKabupaten.value}, ${form.provinsi.value}, ${form.postalCode.value}</p>
+          <p><b>Tautan Peta:</b> ${form.map.value || '-'}</p>
+        `;
+      }
+
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const accessToken = localStorage.getItem("access_token");
+        if (!accessToken) return alert("Silakan login ulang.");
+
+        const address = {
+          street: form.street.value,
+          rtRw: form.rtRw.value,
+          kelurahanDesa: form.kelurahanDesa.value,
+          kecamatan: form.kecamatan.value,
+          kotaKabupaten: form.kotaKabupaten.value,
+          provinsi: form.provinsi.value,
+          postalCode: form.postalCode.value,
+          map: form.map.value
+        };
+
+        const payload = {
+          fullName: form.full_name.value,
+          email: form.email.value,
+          nationalID: form.nik.value,
+          passportNumber: form.passport.value,
+          birthDate: form.birth_date.value,
+          gender: form.gender.value,
+          tripType: form.tripType.value,
+          tripPeriod: form.tripPeriod.value,
+          tripStatus: form.tripStatus.value,
+          phoneNumber: form.phone.value,
+          address: address
+        };
+
+        try {
+          const res = await fetch("/api/pilgrims/register/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + accessToken,
+            },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (res.status === 201) {
+            alert("✅ Jamaah berhasil didaftarkan!");
+            form.reset(); showStep(0);
+          } else alert("❌ Gagal: " + (data.error || data.detail || "Unknown"));
+        } catch (err) {
+          alert("Terjadi kesalahan: " + err);
+        }
+      };
+    });
+  </script>
+
+</body>
+</html>

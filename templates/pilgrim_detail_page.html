@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Detail Jamaah | Mabrur</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles from original */
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .detail-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+        .tab-btn {
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            padding: 0.75rem 1rem;
+        }
+        .tab-btn.active {
+            border-bottom-color: #4f46e5;
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        @media (max-width: 768px) {
+            .tab-btn {
+                flex: 1;
+                text-align: center;
+                padding: 0.75rem 0.5rem;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen py-8 px-4">
+
+    <main class="max-w-4xl mx-auto" id="main-content">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-700 mb-2">Detail Jamaah</h1>
+            <p class="text-gray-600">Informasi lengkap jemaah haji/umrah</p>
+        </div>
+
+        <div id="loadingOrError" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 hidden" role="alert">
+            <p class="font-bold" id="errorMessageTitle">Memuat Data...</p>
+            <p id="errorMessageBody">Sedang mencari detail jamaah...</p>
+        </div>
+        
+        <div id="detailContent" class="hidden">
+            
+            <div id="deathAlert" class="bg-red-100 border border-red-300 rounded-lg p-6 mb-6 hidden">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl mr-4"></i>
+                    <div>
+                        <h3 class="text-red-800 font-bold text-lg mb-1">Informasi Kematian</h3>
+                        <p class="text-red-600">
+                            Tanggal Wafat: <span id="deathDate" class="font-semibold">—</span><br>
+                            Lokasi: <span id="deathLocation" class="font-semibold">—</span><br>
+                            Penyebab: <span id="deathCause" class="font-semibold">—</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-6 border-b border-gray-200 overflow-x-auto">
+                <button class="tab-btn py-3 px-3 active whitespace-nowrap" data-tab="profile">Profil</button>
+                <button class="tab-btn py-3 px-3 whitespace-nowrap" data-tab="health">Kesehatan</button>
+                <button class="tab-btn py-3 px-3 whitespace-nowrap" data-tab="hajj">Log Haji</button>
+                <button class="tab-btn py-3 px-3 whitespace-nowrap" data-tab="umrah">Log Umrah</button>
+                <button class="tab-btn py-3 px-3 whitespace-nowrap" data-tab="agency">Agensi</button>
+                <button class="tab-btn py-3 px-3 whitespace-nowrap" data-tab="script">Raw Data</button>
+            </div>
+
+            <div id="profileTab" class="detail-card p-6 space-y-6">
+                <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b border-indigo-100 pb-2">Informasi Pribadi & Perjalanan</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Nama Lengkap</label>
+                        <p id="pFullName" class="text-gray-900 font-medium">—</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">NIK</label>
+                        <p id="pNationalID" class="text-gray-900">—</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Passport</label>
+                        <p id="pPassportNumber" class="text-gray-900">—</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Tanggal Lahir</label>
+                        <p id="pDateOfBirth" class="text-gray-900">—</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Jenis Kelamin</label>
+                        <p id="pGender" class="text-gray-900">—</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Nomor Telepon</label>
+                        <p id="pPhoneNumber" class="text-gray-900">—</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Jenis Perjalanan</label>
+                        <p id="pTripType" class="text-gray-900">—</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Status</label>
+                        <span id="pStatusBadge" class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">Terdaftar</span>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Alamat Lengkap</label>
+                        <p id="pAddress" class="text-gray-900">—</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="healthTab" class="detail-card p-6 space-y-6 hidden">
+                <h2 class="text-xl font-bold text-green-700 mb-4 border-b border-green-100 pb-2">Informasi Kesehatan</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Tingkat Risiko</label>
+                        <p class="text-sm font-semibold text-gray-900">
+                            <span id="mRiskLevel" class="px-3 py-1 rounded inline-block bg-green-100 text-green-800">LOW</span>
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Pemeriksaan Terakhir</label>
+                        <p id="mExamDate" class="text-gray-900">—</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Kondisi Medis Kronis</label>
+                        <p id="mConditionName" class="text-gray-900">Tidak Ada</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Alergi</label>
+                        <p id="mAllergies" class="text-gray-900">Tidak Ada</p>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-500 mb-1">Catatan Medis</label>
+                        <p id="mMedicalNotes" class="text-gray-900">Tidak Ada Catatan</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hajjTab" class="detail-card p-6 hidden">
+                <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b border-indigo-100 pb-2">Aktivitas Haji</h2>
+                <div class="overflow-x-auto shadow-md rounded-lg">
+                    <table class="w-full table-auto divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Tanggal</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Aktivitas</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Lokasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="hajjTbody" class="bg-white divide-y divide-gray-200">
+                            <tr><td colspan="4" class="px-4 py-3 text-center text-gray-500">Memuat log aktivitas Haji...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="umrahTab" class="detail-card p-6 hidden">
+                <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b border-indigo-100 pb-2">Aktivitas Umrah</h2>
+                <div class="overflow-x-auto shadow-md rounded-lg">
+                    <table class="w-full table-auto divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Tanggal</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Aktivitas</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500">Lokasi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="umrahTbody" class="bg-white divide-y divide-gray-200">
+                            <tr><td colspan="4" class="px-4 py-3 text-center text-gray-500">Memuat log aktivitas Umrah...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="agencyTab" class="detail-card p-6 hidden">
+                <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b border-indigo-100 pb-2">Agensi & Status Lisensi</h2>
+                <div class="space-y-3 text-gray-700">
+                    <p><strong>Nama Agensi:</strong> <span id="agencyName" class="text-gray-900">—</span></p>
+                    <p><strong>No. Registrasi/Lisensi:</strong> <span id="agencyReg" class="text-gray-900">—</span></p>
+                    <p><strong>Status Lisensi (Filter):</strong> <span id="agencyFilter" class="text-gray-900">—</span></p>
+                </div>
+            </div>
+
+            <div id="scriptTab" class="detail-card p-6 hidden">
+                <h2 class="text-xl font-bold text-indigo-700 mb-4 border-b border-indigo-100 pb-2">Data Mentah Jamaah (JSON)</h2>
+                <pre id="pilgrimScript" class="bg-gray-100 p-4 rounded text-sm text-gray-700 overflow-x-auto whitespace-pre-wrap min-h-[100px]">Memuat data mentah...</pre>
+            </div>
+            
+        </div>
+    </main>
+
+<script>
+    // --- Mock Data Store (Consistent with Dashboard) ---
+    const MOCK_DATA = {
+        // Case 1: Active, Low Risk, Haji
+        'p001': { uid: 'p001', fullName: 'Ahmad Mustofa Sani', nationalID: '3273xxxxxxxx0001', passportNumber: 'A1234567', dateOfBirth: '1975-01-15', gender: 'Laki-laki', phoneNumber: '0812xxxx1111', tripType: 'HAJJ', tripPeriod: '1445 H', tripStatus: 'Mulai', medicalRisk: 'LOW', medical: { riskLevel: 'LOW', examDate: '2024-04-10', conditionName: 'Tidak Ada', allergies: [], medicalNotes: 'Sehat, mampu melakukan aktivitas fisik ringan.', }, address: { street: 'Jl. Melati Raya No. 5', rtRw: '001/002', kelurahanDesa: 'Sukaraja', kecamatan: 'Cibiru', kotaKabupaten: 'Bandung', provinsi: 'Jawa Barat', postalCode: '40292' }, hajjLogs: [{ timestamp: '2024-06-05T10:00:00Z', activity: 'Tawaf Qudum', status: 'Selesai', location: 'Masjidil Haram' }, { timestamp: '2024-06-08T15:30:00Z', activity: 'Wukuf', status: 'Selesai', location: 'Arafah' }], umrahLogs: [], agency: { name: 'Al-Haramain Tour', registration: '78901234', filter: 'Aktif' }, deathInfo: null },
+        // Case 2: Active, High Risk (Medical Issue), Umrah
+        'p002': { uid: 'p002', fullName: 'Siti Fatimah Dewi', nationalID: '3273xxxxxxxx0002', passportNumber: 'B8765432', dateOfBirth: '1960-12-25', gender: 'Perempuan', phoneNumber: '0856xxxx2222', tripType: 'UMRAH', tripPeriod: '2024', tripStatus: 'Mulai', medicalRisk: 'HIGH', medical: { riskLevel: 'HIGH', examDate: '2024-05-01', conditionName: 'Penyakit Jantung Koroner, Diabetes Tipe 2', allergies: ['Penisilin'], medicalNotes: 'Membutuhkan kursi roda, pengawasan ketat, dan obat harian.', }, address: { street: 'Perumahan Indah Blok C2', rtRw: '005/001', kelurahanDesa: 'Jatimulyo', kecamatan: 'Lowokwaru', kotaKabupaten: 'Malang', provinsi: 'Jawa Timur', postalCode: '65141' }, hajjLogs: [], umrahLogs: [{ timestamp: '2024-08-10T11:00:00Z', activity: 'Tawaf', status: 'Selesai', location: 'Masjidil Haram' }, { timestamp: '2024-08-10T16:00:00Z', activity: 'Sai', status: 'Selesai', location: 'Safa dan Marwah' }], agency: { name: 'Al-Haramain Tour', registration: '78901234', filter: 'Aktif' }, deathInfo: null },
+        // Case 3: Completed Trip, Normal Risk
+        'p003': { uid: 'p003', fullName: 'Bambang Sudarsono', nationalID: '3273xxxxxxxx0003', passportNumber: 'C1122334', dateOfBirth: '1988-03-10', gender: 'Laki-laki', phoneNumber: '0877xxxx3333', tripType: 'HAJJ', tripPeriod: '1444 H', tripStatus: 'Selesai', medicalRisk: 'LOW', medical: { riskLevel: 'LOW', examDate: '2023-05-15', conditionName: 'Tidak Ada', allergies: ['Debu'], medicalNotes: 'Normal.', }, address: { street: 'Jl. Pahlawan No. 45', rtRw: '002/003', kelurahanDesa: 'Merdeka', kecamatan: 'Medan Kota', kotaKabupaten: 'Medan', provinsi: 'Sumatera Utara', postalCode: '20212' }, hajjLogs: [{ timestamp: '2023-06-25T12:00:00Z', activity: 'Wukuf', status: 'Selesai', location: 'Arafah' }, { timestamp: '2023-07-01T08:00:00Z', activity: 'Tawaf Wada', status: 'Selesai', location: 'Masjidil Haram' }], umrahLogs: [], agency: { name: 'Travel Barokah', registration: '54321098', filter: 'Aktif' }, deathInfo: null },
+        // Case 4: Not Started Yet (Preparation Phase)
+        'p004': { uid: 'p004', fullName: 'Lina Widianti', nationalID: '3273xxxxxxxx0004', passportNumber: 'D9988776', dateOfBirth: '1995-09-20', gender: 'Perempuan', phoneNumber: '0813xxxx4444', tripType: 'UMRAH', tripPeriod: '2025', tripStatus: 'Belum Mulai', medicalRisk: 'LOW', medical: { riskLevel: 'LOW', examDate: '2024-11-01', conditionName: 'Tidak Ada', allergies: [], medicalNotes: 'Sehat.', }, address: { street: 'Komplek Permata Hijau Blok A', rtRw: '010/004', kelurahanDesa: 'Cipete', kecamatan: 'Kebayoran Baru', kotaKabupaten: 'Jakarta Selatan', provinsi: 'DKI Jakarta', postalCode: '12190' }, hajjLogs: [], umrahLogs: [], agency: { name: 'Al-Haramain Tour', registration: '78901234', filter: 'Aktif' }, deathInfo: null },
+        // Case 5: **DECEASED** (Critical Case)
+        'p005': { uid: 'p005', fullName: 'H. Abdullah Rahman (Meninggal)', nationalID: '3273xxxxxxxx0005', passportNumber: 'E5544332', dateOfBirth: '1945-07-10', gender: 'Laki-laki', phoneNumber: '0821xxxx5555', tripType: 'HAJJ', tripPeriod: '1445 H', tripStatus: 'Mulai', medicalRisk: 'FATAL', medical: { riskLevel: 'HIGH', examDate: '2024-05-05', conditionName: 'Riwayat Stroke', allergies: [], medicalNotes: 'Membutuhkan pengawasan 24 jam.', }, address: { street: 'Desa Padi No. 10', rtRw: '001/001', kelurahanDesa: 'Sidoarum', kecamatan: 'Godean', kotaKabupaten: 'Sleman', provinsi: 'DIY Yogyakarta', postalCode: '55264' }, hajjLogs: [{ timestamp: '2024-06-05T08:00:00Z', activity: 'Miqat', status: 'Selesai', location: 'Bir Ali' }, { timestamp: '2024-06-09T03:00:00Z', activity: 'Dirawat', status: 'Tertunda', location: 'Rumah Sakit Arab Saudi' }], umrahLogs: [], agency: { name: 'Al-Haramain Tour', registration: '78901234', filter: 'Aktif' }, 
+            deathInfo: { date: '2024-06-09T05:30:00Z', location: 'Mina - Tenda 305', cause: 'Henti jantung akibat dehidrasi berat dan panas ekstrem.' } },
+        // Case 6: Umrah, Medium Risk
+        'p006': { uid: 'p006', fullName: 'Dewi Ayu Lestari', nationalID: '3273xxxxxxxx0006', passportNumber: 'F0099887', dateOfBirth: '1970-04-12', gender: 'Perempuan', phoneNumber: '0896xxxx6666', tripType: 'UMRAH', tripPeriod: '2024', tripStatus: 'Mulai', medicalRisk: 'MEDIUM', medical: { riskLevel: 'MEDIUM', examDate: '2024-07-15', conditionName: 'Asma Ringan', allergies: ['Udang'], medicalNotes: 'Wajib membawa inhaler.', }, address: { street: 'Jl. Kebon Jati No. 12', rtRw: '003/001', kelurahanDesa: 'Cihampelas', kecamatan: 'Bandung Kulon', kotaKabupaten: 'Bandung', provinsi: 'Jawa Barat', postalCode: '40173' }, hajjLogs: [], umrahLogs: [{ timestamp: '2024-09-01T06:00:00Z', activity: 'Tawaf', status: 'Selesai', location: 'Masjidil Haram' }], agency: { name: 'Travel Barokah', registration: '54321098', filter: 'Aktif' }, deathInfo: null },
+        // Add other pilgrims needed for a full presentation (only 6 unique details needed for mock)
+        ...Array(14).fill(null).reduce((acc, _, i) => {
+            const num = String(i + 7).padStart(3, '0');
+            acc[`p${num}`] = { ...MOCK_DATA['p001'], uid: `p${num}`, fullName: `Jamaah Test ${num}`, nationalID: `3273xxxxxxxx${num}`, phoneNumber: `08xxxxxxxx${num}`, medicalRisk: i % 3 === 0 ? 'HIGH' : 'LOW', tripType: i % 2 === 0 ? 'HAJJ' : 'UMRAH', hajjLogs: i % 2 === 0 ? MOCK_DATA['p001'].hajjLogs : [], umrahLogs: i % 2 !== 0 ? MOCK_DATA['p002'].umrahLogs : [] };
+            return acc;
+        }, {})
+    };
+
+    // --- Helper Functions ---
+    
+    function formatDate(dateString) {
+        if (!dateString) return '—';
+        const options = { day: '2-digit', month: 'short', year: 'numeric' };
+        try {
+            // Attempt to handle date string or ISO format (e.g., from Firestore Timestamp)
+            const date = dateString.includes('T') ? new Date(dateString) : new Date(dateString.replace(/-/g, '/'));
+            if (isNaN(date)) return dateString || '—';
+            return date.toLocaleDateString('id-ID', options);
+        } catch {
+            return dateString || '—';
+        }
+    }
+
+    function formatDateTime(dateString) {
+        if (!dateString) return '—';
+        const options = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Jakarta' };
+        try {
+             // Attempt to handle date string or ISO format
+            const date = dateString.includes('T') ? new Date(dateString) : new Date(dateString.replace(/-/g, '/'));
+            if (isNaN(date)) return dateString || '—';
+            return date.toLocaleDateString('id-ID', options).replace(',', '');
+        } catch {
+            return dateString || '—';
+        }
+    }
+
+    function getRiskClasses(risk) {
+        risk = (risk || 'LOW').toUpperCase();
+        let risk_color = 'bg-green-100 text-green-800';
+        if (risk === 'HIGH' || risk === 'FATAL') {
+            risk_color = 'bg-red-100 text-red-800';
+        } else if (risk === 'MEDIUM') {
+            risk_color = 'bg-yellow-100 text-yellow-800';
+        }
+        return { risk_color, risk_text: risk };
+    }
+
+    function getStatusClasses(status) {
+        status = status || 'Terdaftar';
+        let status_text = status;
+        let status_color = 'bg-indigo-100 text-indigo-800';
+
+        if (status === 'Selesai' || status === 'Completed') {
+            status_text = 'Selesai';
+            status_color = 'bg-green-100 text-green-800';
+        } else if (status === 'Mulai' || status === 'InProgress' || status === 'Active') {
+            status_text = 'Berjalan';
+            status_color = 'bg-blue-100 text-blue-800';
+        }
+        return { status_text, status_color };
+    }
+
+    function renderLogTable(logs, tbodyId) {
+        const tbody = document.getElementById(tbodyId);
+        if (!logs || logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="px-4 py-3 text-center text-gray-500">Belum ada log aktivitas ${tbodyId.includes('hajj') ? 'Haji' : 'Umrah'}.</td></tr>`;
+            return;
+        }
+
+        const rows = logs.map(log => {
+            const status = log.status || 'Selesai';
+            const status_color = status === 'Selesai' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm text-gray-900">${formatDateTime(log.timestamp)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">${log.activity || '—'}</td>
+                    <td class="px-4 py-3">
+                        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${status_color}">${status}</span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-900">${log.location || '—'}</td>
+                </tr>
+            `;
+        }).join('');
+        tbody.innerHTML = rows;
+    }
+
+    // --- Main Rendering Function ---
+    function renderPilgrimDetails() {
+        // 1. Get UID from URL (e.g., /pilgrim/detail/p005)
+        const pathSegments = window.location.pathname.split('/').filter(s => s);
+        const pilgrimUid = pathSegments[pathSegments.length - 1];
+
+        const pilgrim = MOCK_DATA[pilgrimUid];
+        const loadingOrError = document.getElementById('loadingOrError');
+        const detailContent = document.getElementById('detailContent');
+
+        if (!pilgrim) {
+            loadingOrError.classList.remove('hidden');
+            loadingOrError.classList.add('bg-red-100');
+            document.getElementById('errorMessageTitle').innerText = 'Data Tidak Ditemukan';
+            document.getElementById('errorMessageBody').innerText = `Jamaah dengan UID ${pilgrimUid} tidak ditemukan.`;
+            return;
+        }
+
+        // 2. Hide error, show content
+        loadingOrError.classList.add('hidden');
+        detailContent.classList.remove('hidden');
+
+        // 3. Destructure Data for easy access
+        const p = pilgrim;
+        const m = p.medical || {};
+        const a = p.address || {};
+        const agency = p.agency || {};
+        const death = p.deathInfo;
+
+        // 4. Update Title
+        document.getElementById('pageTitle').innerText = `Detail Jamaah: ${p.fullName} | Mabrur`;
+
+        // 5. Render Death Alert
+        const deathAlert = document.getElementById('deathAlert');
+        if (death) {
+            deathAlert.classList.remove('hidden');
+            document.getElementById('deathDate').innerText = formatDate(death.date);
+            document.getElementById('deathLocation').innerText = death.location || 'Tidak Diketahui';
+            document.getElementById('deathCause').innerText = death.cause || 'Tidak Diketahui';
+        } else {
+            deathAlert.classList.add('hidden');
+        }
+
+        // 6. Render Profile Tab
+        document.getElementById('pFullName').innerText = p.fullName || '—';
+        document.getElementById('pNationalID').innerText = p.nationalID || '—';
+        document.getElementById('pPassportNumber').innerText = p.passportNumber || '—';
+        document.getElementById('pDateOfBirth').innerText = formatDate(p.dateOfBirth);
+        document.getElementById('pGender').innerText = p.gender || '—';
+        document.getElementById('pPhoneNumber').innerText = p.phoneNumber || '—';
+        document.getElementById('pTripType').innerText = `${p.tripType || ''} ${p.tripPeriod || '—'}`.trim();
+        
+        const { status_text, status_color } = getStatusClasses(p.tripStatus);
+        const statusBadge = document.getElementById('pStatusBadge');
+        statusBadge.innerText = status_text;
+        statusBadge.className = `inline-flex px-2 py-1 text-xs font-semibold rounded-full ${status_color}`;
+
+        const fullAddress = [a.street, a.rtRw, a.kelurahanDesa, a.kecamatan, a.kotaKabupaten, a.provinsi].filter(s => s).join(', ');
+        document.getElementById('pAddress').innerText = fullAddress ? `${fullAddress} (${a.postalCode || '—'})` : '—';
+
+
+        // 7. Render Health Tab
+        const { risk_color, risk_text } = getRiskClasses(p.medicalRisk);
+        const riskLevelSpan = document.getElementById('mRiskLevel');
+        riskLevelSpan.innerText = risk_text;
+        riskLevelSpan.className = `px-3 py-1 rounded inline-block ${risk_color}`;
+        document.getElementById('mExamDate').innerText = formatDate(m.examDate);
+        document.getElementById('mConditionName').innerText = m.conditionName || 'Tidak Ada';
+        document.getElementById('mAllergies').innerText = (m.allergies && m.allergies.length > 0) ? m.allergies.join(', ') : 'Tidak Ada';
+        document.getElementById('mMedicalNotes').innerText = m.medicalNotes || 'Tidak Ada Catatan';
+
+        // 8. Render Logs
+        renderLogTable(p.hajjLogs, 'hajjTbody');
+        renderLogTable(p.umrahLogs, 'umrahTbody');
+
+        // 9. Render Agency Tab
+        document.getElementById('agencyName').innerText = agency.name || '—';
+        document.getElementById('agencyReg').innerText = agency.registration || '—';
+        document.getElementById('agencyFilter').innerText = agency.filter || '—';
+
+        // 10. Render Raw Data Tab
+        document.getElementById('pilgrimScript').innerText = JSON.stringify(p, null, 2);
+    }
+
+    // --- Tab Switching Logic (from original) ---
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.detail-card').forEach(tab => tab.classList.add('hidden'));
+            button.classList.add('active');
+            document.getElementById(button.dataset.tab + 'Tab').classList.remove('hidden');
+        });
+    });
+
+    // --- Execution on Load ---
+    document.addEventListener('DOMContentLoaded', () => {
+        renderPilgrimDetails();
+        // Set the default tab (Profile) to active on initial load
+        document.getElementById('profileTab').classList.remove('hidden');
+        document.querySelector('.tab-btn[data-tab="profile"]').classList.add('active');
+    });
+</script>
+</body>
+</html>

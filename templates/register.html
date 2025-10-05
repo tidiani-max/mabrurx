@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MabrurX - Pendaftaran Agensi & Pemerintah</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1E3A8A', // Biru-800/900
+                        accent: '#FBBF24',  // Kuning-500/400
+                        neutral: '#4B5563',
+                        light: '#F9FAFB',
+                        success: '#10B981',
+                        danger: '#EF4444',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-light min-h-screen flex items-center justify-center font-sans antialiased">
+    
+    <main class="flex-grow flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8 w-full">
+        <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-10 w-full max-w-2xl border-t-4 border-accent">
+            <header class="mb-8 text-center">
+                <h2 class="text-3xl font-extrabold text-gray-900">
+                    Daftar ke Ekosistem Mabrur<span class="text-accent">X</span>
+                </h2>
+                <p class="text-neutral mt-2">Buat akun Agensi Perjalanan atau Pejabat Pemerintah khusus Anda.</p>
+                <div id="message-box" class="mt-4 p-4 rounded-lg hidden transition-opacity duration-300 text-sm" role="alert">
+                    <div id="message-text" class="font-medium"></div>
+                </div>
+            </header>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pilih Peran Anda</label>
+                <div class="flex space-x-4">
+                    <button type="button" id="role-agency-btn" data-role="travel_agency" 
+                        class="flex-1 py-3 px-4 rounded-lg border-2 border-primary text-primary font-semibold transition duration-200 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <i class="fas fa-plane-departure mr-2"></i> Agensi Perjalanan
+                    </button>
+                    <button type="button" id="role-government-btn" data-role="government" 
+                        class="flex-1 py-3 px-4 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold transition duration-200 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <i class="fas fa-landmark mr-2"></i> Pejabat Pemerintah
+                    </button>
+                </div>
+            </div>
+
+            <form id="registration-form" class="space-y-5 hidden">
+                <input type="hidden" id="role" name="role" value="">
+
+                <h3 class="text-xl font-semibold text-primary border-b pb-2">Detail Akun</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="fullName" class="block text-sm font-medium text-gray-700">Nama Lengkap</label>
+                        <input type="text" id="fullName" name="fullName" required 
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Alamat Email</label>
+                        <input type="email" id="email" name="email" required 
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Kata Sandi</label>
+                        <input type="password" id="password" name="password" required 
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    </div>
+                    <div>
+                        <label for="phoneNumber" class="block text-sm font-medium text-gray-700">Nomor Telepon (Opsional)</label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" 
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+
+                <div id="agency-fields" class="space-y-5 hidden pt-4 border-t border-gray-200">
+                    <h3 class="text-xl font-semibold text-primary border-b pb-2">Detail Agensi Perjalanan</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="agencyName" class="block text-sm font-medium text-gray-700">Nama Agensi</label>
+                            <input type="text" id="agencyName" name="agencyName" 
+                                class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+                        <div>
+                            <label for="businessLicenseNumber" class="block text-sm font-medium text-gray-700">Nomor Izin Usaha</label>
+                            <input type="text" id="businessLicenseNumber" name="businessLicenseNumber" 
+                                class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="licenseExpiryDate" class="block text-sm font-medium text-gray-700">Tanggal Kedaluwarsa Izin</label>
+                            <input type="date" id="licenseExpiryDate" name="licenseExpiryDate" 
+                                class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+                        <div>
+                            <label for="mainContactName" class="block text-sm font-medium text-gray-700">Nama Kontak Utama</label>
+                            <input type="text" id="mainContactName" name="mainContactName" 
+                                class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+                    
+                    <h4 class="font-medium text-gray-700 pt-2">Alamat Agensi</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input type="text" name="street" placeholder="Nama Jalan" class="col-span-2 mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        <input type="text" name="rtRw" placeholder="RT/RW" class="mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        <input type="text" name="postalCode" placeholder="Kode Pos" class="mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <input type="text" name="kelurahanDesa" placeholder="Kelurahan/Desa" class="mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        <input type="text" name="kecamatan" placeholder="Kecamatan" class="mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        <input type="text" name="kotaKabupaten" placeholder="Kota/Kabupaten" class="mt-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    </div>
+                    <input type="text" name="provinsi" placeholder="Provinsi" class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                </div>
+
+                <div id="government-fields" class="space-y-5 hidden pt-4 border-t border-gray-200">
+                    <h3 class="text-xl font-semibold text-primary border-b pb-2">Profil Pemerintah</h3>
+                    <div>
+                        <label for="ministryName" class="block text-sm font-medium text-gray-700">Nama Kementerian/Departemen</label>
+                        <input type="text" id="ministryName" name="ministryName" 
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="employeeId" class="block text-sm font-medium text-gray-700">ID Pegawai / NIP</label>
+                            <input type="text" id="employeeId" name="employeeId" 
+                                class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+                        <div>
+                            <label for="designation" class="block text-sm font-medium text-gray-700">Jabatan / Posisi</label>
+                            <input type="text" id="designation" name="designation" 
+                                class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="clearanceLevel" class="block text-sm font-medium text-gray-700">Tingkat Akses (Contoh: Level 1, Supervisor)</label>
+                        <input type="text" id="clearanceLevel" name="clearanceLevel" 
+                            class="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    </div>
+                </div>
+                
+                <div class="pt-6">
+                    <button type="submit" id="submitButton"
+                        class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-lg text-lg font-semibold text-white bg-primary hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-accent transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-user-plus mr-2"></i> Daftar Akun
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // --- API Endpoint Configuration ---
+        const API_ENDPOINT = '/api/register_user/'; // <-- **UPDATE THIS URL**
+
+        // --- DOM Elements ---
+        const form = document.getElementById('registration-form');
+        const roleInput = document.getElementById('role');
+        const agencyBtn = document.getElementById('role-agency-btn');
+        const governmentBtn = document.getElementById('role-government-btn');
+        const agencyFields = document.getElementById('agency-fields');
+        const governmentFields = document.getElementById('government-fields');
+        const submitButton = document.getElementById('submitButton');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        
+        // --- Utility Functions ---
+
+        /** Toggles the display of form fields based on the selected role. */
+        function updateFormVisibility(selectedRole) {
+            form.classList.remove('hidden');
+            roleInput.value = selectedRole;
+
+            // Reset borders for all buttons
+            agencyBtn.classList.replace('border-primary', 'border-gray-300');
+            agencyBtn.classList.replace('text-primary', 'text-gray-700');
+            governmentBtn.classList.replace('border-primary', 'border-gray-300');
+            governmentBtn.classList.replace('text-primary', 'text-gray-700');
+
+            // Hide/Show fields and update button styles
+            if (selectedRole === 'travel_agency') {
+                agencyFields.classList.remove('hidden');
+                governmentFields.classList.add('hidden');
+                agencyBtn.classList.replace('border-gray-300', 'border-primary');
+                agencyBtn.classList.replace('text-gray-700', 'text-primary');
+            } else if (selectedRole === 'government') {
+                agencyFields.classList.add('hidden');
+                governmentFields.classList.remove('hidden');
+                governmentBtn.classList.replace('border-gray-300', 'border-primary');
+                governmentBtn.classList.replace('text-gray-700', 'text-primary');
+            }
+
+            // Manually set required attribute based on visible fields
+            updateRequiredAttributes(selectedRole);
+        }
+
+        /** Sets the 'required' attribute dynamically for relevant fields */
+        function updateRequiredAttributes(selectedRole) {
+            // General required fields (always required)
+            const generalRequired = ['fullName', 'email', 'password'];
+            generalRequired.forEach(id => document.getElementById(id).required = true);
+
+            // Get all role-specific fields
+            const allRoleFields = Array.from(agencyFields.querySelectorAll('input, select, textarea'))
+                                 .concat(Array.from(governmentFields.querySelectorAll('input, select, textarea')));
+            
+            allRoleFields.forEach(field => {
+                // Remove required from all to reset
+                field.required = false;
+
+                // Set required for the visible set
+                if (selectedRole === 'travel_agency' && agencyFields.contains(field)) {
+                    // Agency must fill name, license, contact, and address basics
+                    if (['agencyName', 'businessLicenseNumber', 'mainContactName', 'street', 'kelurahanDesa', 'kecamatan', 'kotaKabupaten', 'provinsi'].includes(field.name)) {
+                        field.required = true;
+                    }
+                } else if (selectedRole === 'government' && governmentFields.contains(field)) {
+                    // Government must fill ministry, ID, and designation
+                    if (['ministryName', 'employeeId', 'designation'].includes(field.name)) {
+                        field.required = true;
+                    }
+                }
+            });
+        }
+
+
+        /** Displays submission messages */
+        const showMessage = (type, message) => {
+            messageBox.classList.remove('hidden', 'bg-red-100', 'bg-green-100', 'border-success', 'border-danger');
+            
+            messageBox.classList.add(
+                type === 'success' ? 'bg-green-100 border-l-4 border-success text-success' : 'bg-red-100 border-l-4 border-danger text-danger'
+            );
+            messageText.textContent = message;
+            
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 10000); // 10 seconds visibility
+        };
+
+        /** Collects form data into a single object, excluding empty optional fields. */
+        function getFormData(formElement) {
+            const data = {};
+            const formData = new FormData(formElement);
+            
+            for (const [key, value] of formData.entries()) {
+                // Only include non-empty values
+                if (value && value.trim() !== "") {
+                    data[key] = value.trim();
+                }
+            }
+            return data;
+        }
+
+        // --- Event Listeners ---
+
+        agencyBtn.addEventListener('click', () => updateFormVisibility('travel_agency'));
+        governmentBtn.addEventListener('click', () => updateFormVisibility('government'));
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Collect data and validate required fields again (for safety)
+            const formData = getFormData(form);
+
+            if (!formData.email || !formData.fullName || !formData.password || !formData.role) {
+                showMessage('error', 'Mohon isi semua kolom umum yang wajib diisi.');
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mendaftar...';
+            messageBox.classList.add('hidden'); // Clear previous messages
+
+            // --- SIMULATION START (Replace with actual fetch in production) ---
+            const SIMULATION_MODE = true; 
+
+            if (SIMULATION_MODE) {
+                await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network latency
+
+                // Simulate successful registration
+                const mockUid = formData.role === 'travel_agency' ? 'AGY-10001' : 'GOV-5001';
+                showMessage(
+                    'success', 
+                    `✅ Pendaftaran ${formData.role === 'travel_agency' ? 'Agensi' : 'Pemerintah'} berhasil! Harap tunggu verifikasi. UID Anda: ${mockUid}.`
+                );
+                form.reset();
+            } 
+            // --- SIMULATION END ---
+
+            // --- ACTUAL API CALL (Uncomment and remove simulation for real environment) ---
+            
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    const message = result.message || `Pendaftaran berhasil untuk ${formData.role}! UID: ${result.uid}`;
+                    showMessage('success', `✅ ${message}`);
+                    form.reset();
+                } else {
+                    const errorMessage = result.error || 'Terjadi kesalahan API yang tidak terduga.';
+                    showMessage('error', `❌ Pendaftaran Gagal: ${errorMessage}`);
+                }
+            } catch (error) {
+                console.error('Jaringan atau kesalahan tak tertangani:', error);
+                showMessage('error', '❌ Terjadi kesalahan jaringan. Harap periksa endpoint API dan koneksi Anda.');
+            }
+            
+            
+            finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-user-plus mr-2"></i> Daftar Akun';
+            }
+        });
+
+        // Set default role on load
+        updateFormVisibility('travel_agency');
+    </script>
+</body>
+</html>
