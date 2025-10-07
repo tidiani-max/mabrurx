@@ -1,11 +1,9 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agency Dashboard - MabrurX</title>
-    <link rel="icon" type="image/png" href="{% static 'rest_framework/img/logo-mabrurx.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -22,6 +20,10 @@
                         danger: '#EF4444',  // Red for high risk/deceased
                         official: '#7C3AED', // Added for clarity (Government document)
                         tracker: '#3B82F6', // Blue-500 for the new tracker feature
+                        // Tambahan warna untuk laporan formal
+                        secondary: '#D97706', // Orange-700, used as a strong accent line
+                        // Tambahan untuk sertifikat
+                        certbg: '#F0FFF4', // Green-50 for background
                     }
                 }
             }
@@ -30,7 +32,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* Memastikan modal berada di atas segalanya */
-        #detailModal, #kpiModal, #documentModal { z-index: 1000; }
+        #detailModal, #kpiModal, #documentModal, #reportModal { z-index: 1000; }
         /* Scrollbar kustom */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
@@ -38,6 +40,65 @@
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
         .progress-bar-fill {
             transition: width 0.5s ease-in-out;
+        }
+
+        /* Styling for Report View to match formal government-style design */
+        .report-header-formal {
+            border-bottom: 3px solid #D97706; /* secondary */
+            padding-bottom: 1rem;
+        }
+        .report-table th {
+            background-color: #f3f4f6; /* gray-50 */
+        }
+        .report-table tr:nth-child(even) {
+            background-color: #f9fafb; /* light */
+        }
+
+        /* Print-specific styles for the modal */
+        @media print {
+            body > *:not(#documentModal, #reportModal) {
+                display: none !important; /* Hide everything except the modals meant for printing */
+            }
+            /* General print setup for both report and document */
+            #reportModal, #documentModal {
+                position: static !important;
+                display: block !important;
+                background-color: white !important;
+                height: auto !important;
+                width: 100% !important;
+                max-height: none !important; /* Allow full height when printing */
+            }
+            /* Hide non-printable elements */
+            .no-print, .no-print-doc {
+                display: none !important;
+            }
+
+            /* Report-specific print styles */
+            #reportModal .max-w-7xl {
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                height: auto !important;
+            }
+            .report-header-formal, .report-table {
+                box-shadow: none !important;
+            }
+            
+            /* Document/Certificate-specific print styles */
+            #documentModal .max-w-2xl { 
+                max-width: 100% !important; 
+                width: 100% !important; 
+                margin: 0 !important; 
+            }
+            #certPreview { 
+                box-shadow: none !important; 
+                border: none !important; /* Remove dashed border in print */
+            }
+             #documentModal .p-6.flex-grow.overflow-y-auto {
+                padding: 0;
+                background-color: white !important;
+             }
         }
     </style>
 </head>
@@ -65,8 +126,12 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="mb-8">
+        <div class="mb-8 flex justify-between items-center">
             <h2 class="text-3xl font-bold text-gray-900">Ikhtisar Manajemen Jemaah</h2>
+            <button onclick="showReportModal()"
+                    class="px-4 py-2 bg-primary text-white rounded-lg shadow-md hover:bg-blue-700 transition font-semibold flex items-center">
+                <i class="fas fa-download mr-2"></i> Unduh Laporan Jemaah
+            </button>
         </div>
 
         <section class="mb-12">
@@ -155,8 +220,8 @@
     </footer>
 
 <div id="detailModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden transform transition-all">
-        <div class="p-6">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col transform transition-all">
+        <div class="p-6 overflow-y-auto flex-grow">
             <h3 class="text-2xl font-bold text-primary mb-4 border-b pb-2">Detail Jemaah</h3>
             <div id="modalContent" class="space-y-3 text-gray-700">
                 </div>
@@ -187,33 +252,71 @@
 </div>
 
 <div id="documentModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl h-3/4 overflow-hidden transform transition-all flex flex-col">
-        <div class="p-4 flex justify-between items-center border-b bg-official text-white">
-            <h3 class="text-xl font-bold">SERTIFIKAT KEMATIAN RESMI PEMERINTAH</h3>
-            <button onclick="document.getElementById('documentModal').classList.add('hidden')" class="text-white hover:text-gray-200">
-                <i class="fas fa-times"></i>
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transform transition-all">
+        
+        <div class="p-4 flex justify-between items-center border-b border-gray-200 no-print-doc bg-light">
+            <h3 class="text-xl font-bold text-official flex items-center">
+                <i class="fas fa-stamp mr-2 text-secondary"></i> Sertifikat Kematian Resmi
+            </h3>
+            <button onclick="document.getElementById('documentModal').classList.add('hidden')" class="p-2 text-neutral hover:text-gray-900">
+                <i class="fas fa-times text-xl"></i>
             </button>
         </div>
-        <div class="p-6 flex-grow overflow-y-auto bg-gray-50">
-            <div class="border-4 border-official p-6 bg-white shadow-lg space-y-4">
-                <p class="text-center font-extrabold text-3xl text-official border-b-2 border-official pb-2">CATATAN PEMERINTAH MABRURX</p>
-                <p><strong>ID Sertifikat:</strong> GOV-FAT-007-2025</p>
-                <p><strong>UID Jemaah:</strong> <span id="doc-uid">P007</span></p>
-                <p><strong>Nama:</strong> <span id="doc-name">H. Zulkifli</span></p>
-                <p><strong>Agensi:</strong> IBRI-Travel</p>
-                <p><strong>Tanggal Kematian:</strong> 2025-06-25 14:30 Waktu KSA</p>
-                <p><strong>Lokasi:</strong> Mina, Bagian Kamp Tenda 4B</p>
-                <p><strong>Penyebab Kematian (Terverifikasi Pemerintah):</strong> Infark Miokard Akut (Serangan Jantung) karena sebab alami.</p>
-                <p class="mt-4 text-sm text-gray-600">Validasi resmi ini mengizinkan pemulangan/pemakaman sesuai keinginan keluarga dan protokol MabrurX/Pemerintah. **Tanda Tangan Digital: [Hash Blockchain MabrurX]**</p>
-                <p class="text-right font-bold text-gray-800 pt-4">Diverifikasi oleh: Kementerian Haji & Umrah Arab Saudi</p>
+        
+        <div class="p-6 flex-grow overflow-y-auto bg-gray-50/50">
+            <div id="certPreview" class="border-2 border-dashed border-secondary p-6 bg-certbg rounded-md text-gray-800 shadow-lg">
+                <p class="text-center font-bold text-xl mb-1 text-primary">Pemerintah Republik Indonesia</p>
+                <p class="text-center text-sm mb-4">Kementerian Agama - Direktorat Jenderal Penyelenggaraan Haji dan Umrah</p>
+                <p class="text-3xl text-center text-secondary font-extrabold mb-8">CERTIFICATE OF DEMISE (TERVALIDASI)</p>
+                
+                <p class="font-medium text-lg mb-4">Telah divalidasi dan dicatat secara resmi oleh Kementerian Agama:</p>
+                
+                <ul class="list-none ml-4 mt-2 space-y-3 text-base">
+                    <li id="certPilgrimName"><i class="fas fa-user-circle mr-2 text-official"></i> Nama Jemaah: <strong class="text-gray-900"></strong></li>
+                    <li id="certPilgrimUID"><i class="fas fa-id-card mr-2 text-official"></i> UID: <strong class="text-gray-900"></strong></li>
+                    <li id="certAgency"><i class="fas fa-building mr-2 text-official"></i> Agensi Penyelenggara: <strong class="text-gray-900">IBRI-Travel Agency</strong></li>
+                    <li id="certValidationDate"><i class="fas fa-calendar-check mr-2 text-official"></i> Tanggal Validasi: <strong class="text-gray-900"></strong></li>
+                    <li id="certCause"><i class="fas fa-heartbeat mr-2 text-official"></i> Penyebab Kematian Resmi: <strong class="text-danger"></strong></li>
+                </ul>
+
+                <p class="text-center mt-8 text-sm text-neutral italic border-t border-gray-300 pt-4">Dokumen ini memiliki kekuatan hukum setelah ditandatangani oleh pejabat yang berwenang dan tervalidasi di sistem MabrurX Government Track.</p>
             </div>
-            <p class="text-center text-xs text-neutral mt-4">Catatan: Ini adalah dokumen simulasi untuk tujuan presentasi.</p>
+        </div>
+        
+        <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rounded-b-lg no-print-doc">
+            <button onclick="window.print()" 
+                    class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition shadow-md font-semibold flex items-center">
+                <i class="fas fa-download mr-2"></i> Unduh PDF
+            </button>
+            <button onclick="document.getElementById('documentModal').classList.add('hidden')" 
+                    class="px-4 py-2 bg-neutral text-white rounded-lg hover:bg-gray-700 transition font-semibold">
+                Tutup
+            </button>
         </div>
     </div>
 </div>
 
+<div id="reportModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[95vh] overflow-hidden transform transition-all flex flex-col">
+        <div class="p-4 flex justify-between items-center border-b border-gray-200 no-print bg-light">
+            <h3 class="text-xl font-bold text-primary flex items-center"><i class="fas fa-file-invoice mr-2"></i> Pratinjau Laporan Resmi</h3>
+            <div class="flex space-x-2">
+                 <button onclick="printReport()" 
+                         class="px-4 py-2 bg-official text-white font-semibold rounded-lg hover:bg-purple-700 transition flex items-center">
+                     <i class="fas fa-download mr-2"></i> Cetak/Simpan PDF
+                 </button>
+                 <button onclick="document.getElementById('reportModal').classList.add('hidden')" class="p-2 text-neutral hover:text-gray-900">
+                     <i class="fas fa-times text-xl"></i>
+                 </button>
+            </div>
+        </div>
+        <div class="p-6 flex-grow overflow-y-auto bg-light" id="reportContent">
+             </div>
+    </div>
+</div>
+
 <script>
-    // --- Mock Data: 20 Pilgrims for IBRI-Travel (UPDATED) ---
+    // --- Mock Data: 20 Pilgrims for IBRI-Travel (UNCHANGED) ---
     const MOCK_PILGRIMS = [
         { uid: 'P001', name: 'Ahmad Mustofa', age: 45, risk: 'Low', status: 'Active', package: 'Hajj Reguler', package_type: 'Hajj', contact: '08123456789', sugar_level: 'A+', ritual_progress: 90, last_ritual: 'Tawaf Ifadah' },
         { uid: 'P002', name: 'Siti Fatimah Dewi', age: 62, risk: 'High', status: 'Active', package: 'Hajj Khusus', package_type: 'Hajj', medical_note: 'Chronic Diabetes, requires daily checkup.', sugar_level: 'B', ritual_progress: 40, last_ritual: 'Struggling with Sa\'i' },
@@ -241,7 +344,7 @@
     const ITEMS_PER_PAGE = 10;
     let currentPage = 1;
 
-    // --- Detail View Simulation Function (Updated) ---
+    // --- Detail View Simulation Function (UPDATED) ---
     function viewDetails(uid) {
         const data = MOCK_PILGRIMS.find(p => p.uid === uid);
         const modalContent = document.getElementById('modalContent');
@@ -286,7 +389,7 @@
                 ${ritualStatus}
             `;
             
-            // Medical Note Section (Now includes medical_note and sugar_level consistency)
+            // Medical Note Section
             if (data.medical_note || data.sugar_level === 'B') {
                 const medicalDetail = data.medical_note 
                     ? `<p class="text-red-600 text-sm">${data.medical_note.replace('Chronic Diabetes, requires daily checkup.', 'Diabetes Kronis, memerlukan pemeriksaan harian.').replace('Hypertension, mobility limited.', 'Hipertensi, mobilitas terbatas.')}</p>`
@@ -298,7 +401,7 @@
                 html += `<div class="p-3 mt-4 bg-red-50 border-l-4 border-danger"><p class="font-semibold text-danger"><i class="fas fa-notes-medical mr-1"></i> Catatan/Kondisi Medis:</p>${medicalDetail}${sugarWarning}</div>`;
             }
             
-            // Incident/Deceased Section (Unchanged logic)
+            // Incident/Deceased Section 
             if (data.incident) {
                 const incidentText = data.incident
                     .replace('Sudden respiratory failure (Mina). **Government Verified.**', 'Gagal napas mendadak (Mina). **Terverifikasi Pemerintah.**')
@@ -307,9 +410,14 @@
                 html += `<div class="p-3 mt-4 bg-gray-100 border-l-4 border-neutral"><p class="font-semibold text-gray-700">Laporan Insiden (Pengajuan Agensi):</p><p class="text-gray-600 text-sm">${incidentText}</p></div>`;
                 
                 if (data.status === 'Deceased' && data.incident.includes('Government Verified')) {
+                    // Cek Jemaah P007 dan masukkan penyebab kematian resmi
+                    const causeOfDeath = data.uid === 'P007' 
+                        ? 'Gagal napas mendadak (Mina)' 
+                        : 'Infark Miokard Akut (Serangan Jantung)'; // Default untuk jemaah lain
+
                     html += `
                         <div class="mt-4 text-center">
-                            <a href="#" onclick="event.preventDefault(); showDocumentModal('${data.uid}', '${data.name}')" 
+                            <a href="#" onclick="event.preventDefault(); showDocumentModal('${data.uid}', '${data.name}', 'IBRI-Travel Agency', '${causeOfDeath}')" 
                                 class="inline-block px-6 py-2 bg-official text-white rounded-lg hover:bg-purple-700 font-semibold transition">
                                 <i class="fas fa-file-contract mr-2"></i> Lihat Sertifikat Kematian Pemerintah
                             </a>
@@ -325,7 +433,7 @@
         document.getElementById('detailModal').classList.remove('hidden');
     }
 
-    // --- KPI Details Simulation Function (Unchanged) ---
+    // --- KPI Details Simulation Function (UNCHANGED) ---
     function showKpiDetails(title, count, detailsArray) {
         document.getElementById('kpiModalTitle').textContent = `${title} (${count} item)`;
         
@@ -346,6 +454,10 @@
                  .replace('(Approved)', '(Disetujui)')
                  .replace('(GOV VERIFIED)', '(TERVERIFIKASI PEMERINTAH)')
                  // New ritual tracking translations
+                 .replace('P001: 90% Selesai', 'P001: 90% Selesai') 
+                 .replace('P002: 40% (Tertunda)', 'P002: 40% (Tertunda)')
+                 .replace('P003: 100% Selesai', 'P003: 100% Selesai')
+                 .replace('P012: 50% (Tertunda)', 'P012: 50% (Tertunda)')
                  .replace('Completed Hajj', 'Haji Selesai')
                  .replace('Completed Umrah', 'Umrah Selesai')
                  .replace('Struggling with Sa\'i', 'Kesulitan Sa\'i')
@@ -361,101 +473,201 @@
         document.getElementById('kpiModal').classList.remove('hidden');
     }
     
-    // --- Government Document Simulation (Unchanged) ---
-    function showDocumentModal(uid, name) {
-        document.getElementById('doc-uid').textContent = uid;
-        document.getElementById('doc-name').textContent = name;
+    // --- Government Document Simulation (CERTIFICATE) (UNCHANGED) ---
+    function showDocumentModal(uid, name, agency, cause) {
+        // Format tanggal hari ini
+        const validationDate = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
         
-        document.getElementById('detailModal').classList.add('hidden'); // Hide details first
+        // Update the content of the certificate elements
+        document.querySelector('#certPilgrimName strong').textContent = name;
+        document.querySelector('#certPilgrimUID strong').textContent = uid;
+        document.querySelector('#certAgency strong').textContent = agency;
+        document.querySelector('#certValidationDate strong').textContent = validationDate;
+        document.querySelector('#certCause strong').textContent = cause;
+        
+        document.getElementById('detailModal').classList.add('hidden'); // Sembunyikan detail dulu
         document.getElementById('documentModal').classList.remove('hidden');
     }
 
-    // --- Main Rendering Function (Includes Filter, Search, Pagination) (UPDATED) ---
+    // --- Report/Download Functions (UNCHANGED) ---
+
+    // Function to generate and show the report modal
+    function showReportModal() {
+        const reportContent = document.getElementById('reportContent');
+        
+        // Use all MOCK_PILGRIMS for the full report, ignoring current dashboard filters/pagination
+        const pilgrims = MOCK_PILGRIMS; 
+        const agencyName = 'IBRI-Travel Agency';
+        const reportDate = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        let tableRows = pilgrims.map(p => `
+            <tr>
+                <td class="px-6 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${p.uid}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700">${p.name}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700">${p.age}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm font-semibold ${p.status === 'Deceased' ? 'text-danger' : 'text-primary'}">${p.status === 'Deceased' ? 'Meninggal' : 'Aktif'}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700">${p.package}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm font-semibold ${p.risk === 'High' ? 'text-danger' : 'text-success'}">${p.risk === 'High' ? 'Tinggi' : 'Rendah'}</td>
+                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-700">${p.ritual_progress}%</td>
+                <td class="px-6 py-3 text-sm text-gray-700">${p.medical_note ? p.medical_note.substring(0, 20) + '...' : '-'}</td>
+            </tr>
+        `).join('');
+
+        let reportHTML = `
+            <div class="bg-white p-6 shadow-xl rounded-lg mb-6 border-2 border-dashed border-secondary">
+                
+                <div class="report-header-formal mb-6">
+                    <p class="text-center font-bold text-lg mb-1 text-primary">LAPORAN JEMAAH HAJI/UMRAH</p>
+                    <p class="text-center text-sm text-neutral">Data Jemaah ${agencyName} per Tanggal ${reportDate}</p>
+                </div>
+
+                <div class="space-y-4 mb-6 text-gray-800">
+                    <p><strong>Agensi:</strong> ${agencyName}</p>
+                    <p><strong>Total Jemaah Tercatat:</strong> ${pilgrims.length}</p>
+                    <p><strong>Ringkasan Status:</strong> ${pilgrims.filter(p => p.status === 'Active').length} Aktif, ${pilgrims.filter(p => p.status === 'Deceased').length} Meninggal.</p>
+                </div>
+
+                <h4 class="text-lg font-bold text-secondary mb-3">Detail Jemaah (Data Mentah)</h4>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 report-table">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">UID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Nama</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Usia</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Paket</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Risiko</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Ritual (%)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Catatan Medis Singkat</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="mt-8 text-center text-xs text-neutral italic border-t border-gray-300 pt-4">Dokumen ini dihasilkan secara otomatis oleh sistem MabrurX pada ${reportDate} dan dapat digunakan untuk keperluan internal agensi.</p>
+            </div>
+        `;
+
+        reportContent.innerHTML = reportHTML;
+        document.getElementById('reportModal').classList.remove('hidden');
+    }
+
+    // Print/Download Report Function (UNCHANGED)
+    function printReport() {
+        // Hide other modals if open
+        document.getElementById('detailModal').classList.add('hidden');
+        document.getElementById('kpiModal').classList.add('hidden');
+        document.getElementById('documentModal').classList.add('hidden');
+        
+        // Print the report modal content
+        window.print(); 
+    }
+
+    // --- Pilgrim List Rendering and Pagination (UNCHANGED) ---
     function renderPilgrims(page) {
         currentPage = page;
-        const pilgrimList = document.getElementById('pilgrim-list');
         const searchInput = document.getElementById('search-input').value.toLowerCase();
         const filterRisk = document.getElementById('filter-risk').value;
         const filterStatus = document.getElementById('filter-status').value;
-        const filterPackage = document.getElementById('filter-package').value; // NEW FILTER
-        const noResults = document.getElementById('no-results');
+        const filterPackage = document.getElementById('filter-package').value;
 
-        // 1. FILTERING & SEARCHING
-        const filteredPilgrims = MOCK_PILGRIMS.filter(p => {
-            const nameMatch = p.name.toLowerCase().includes(searchInput) || p.uid.toLowerCase().includes(searchInput);
-            const riskMatch = filterRisk === 'All' || p.risk === filterRisk;
-            const statusMatch = filterStatus === 'All' || p.status === filterStatus;
-            // NEW FILTER LOGIC
-            const packageMatch = filterPackage === 'All' || p.package_type === filterPackage;
-            
-            return nameMatch && riskMatch && statusMatch && packageMatch;
+        let filteredPilgrims = MOCK_PILGRIMS.filter(p => {
+            const matchesSearch = p.name.toLowerCase().includes(searchInput) || p.uid.toLowerCase().includes(searchInput);
+            const matchesRisk = filterRisk === 'All' || p.risk === filterRisk;
+            const matchesStatus = filterStatus === 'All' || p.status === filterStatus;
+            const matchesPackage = filterPackage === 'All' || p.package_type === filterPackage;
+            return matchesSearch && matchesRisk && matchesStatus && matchesPackage;
         });
 
-        // Show/hide no results message
-        if (filteredPilgrims.length === 0) {
-            pilgrimList.innerHTML = '';
+        const totalPages = Math.ceil(filteredPilgrims.length / ITEMS_PER_PAGE);
+        const start = (page - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        const pilgrimsOnPage = filteredPilgrims.slice(start, end);
+
+        const pilgrimList = document.getElementById('pilgrim-list');
+        const noResults = document.getElementById('no-results');
+        pilgrimList.innerHTML = '';
+
+        if (pilgrimsOnPage.length === 0) {
             noResults.classList.remove('hidden');
-            document.getElementById('pagination-controls').innerHTML = '';
-            return;
         } else {
             noResults.classList.add('hidden');
-        }
+            pilgrimsOnPage.forEach(p => {
+                const statusColor = p.status === 'Deceased' ? 'text-danger bg-red-100' : 'text-success bg-green-100';
+                const riskColor = p.risk === 'High' ? 'text-danger bg-red-100' : 'text-success bg-green-100';
+                const statusText = p.status === 'Deceased' ? 'Meninggal' : 'Aktif';
+                const riskText = p.risk === 'High' ? 'Tinggi' : 'Rendah';
 
-        // 2. PAGINATION
-        const totalPages = Math.ceil(filteredPilgrims.length / ITEMS_PER_PAGE);
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        const pilgrimsToShow = filteredPilgrims.slice(startIndex, endIndex);
-
-
-        // 3. RENDERING
-        const pilgrimHTML = pilgrimsToShow.map(pilgrim => {
-            const riskColorClass = pilgrim.risk === 'High' ? 'text-danger font-semibold' : 'text-success';
-            const statusColorClass = pilgrim.status === 'Deceased' ? 'text-danger font-semibold' : 'text-primary';
-            const packageColorClass = pilgrim.package_type === 'Hajj' ? 'text-blue-700' : 'text-green-700';
-            
-            const statusText = pilgrim.status === 'Deceased' ? 'Meninggal' : 'Aktif';
-            const riskText = pilgrim.risk === 'High' ? 'Tinggi' : 'Rendah';
-            
-            return `
-                <tr class="${pilgrim.status === 'Deceased' ? 'bg-red-50/50' : ''}">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${pilgrim.uid}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${pilgrim.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${pilgrim.age}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm ${statusColorClass}">${statusText}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm ${packageColorClass} font-medium">${pilgrim.package_type}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm ${riskColorClass}">${riskText}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="#" 
-                            onclick="event.preventDefault(); viewDetails('${pilgrim.uid}')"
-                            class="text-primary hover:text-blue-700">
-                            Lihat Detail
-                        </a>
-                        ${pilgrim.status === 'Deceased' ? '<i class="fas fa-file-contract ml-2 text-official" title="Sertifikat Pemerintah Tersedia"></i>' : ''}
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${p.uid}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${p.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${p.age}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">${statusText}</span>
                     </td>
-                </tr>
-            `;
-        }).join('');
-
-        pilgrimList.innerHTML = pilgrimHTML;
-        
-        // 4. RENDER PAGINATION CONTROLS
-        const controls = document.getElementById('pagination-controls');
-        const rangeEnd = Math.min(endIndex, filteredPilgrims.length);
-        const infoText = `Menampilkan ${startIndex + 1} hingga ${rangeEnd} dari ${filteredPilgrims.length} entri (Halaman ${currentPage} dari ${totalPages})`;
-        
-        let paginationHTML = `<div class="text-sm text-neutral">${infoText}</div><div class="space-x-2">`;
-        
-        for (let i = 1; i <= totalPages; i++) {
-            const activeClass = i === currentPage ? 'bg-primary text-white' : 'bg-white text-primary hover:bg-gray-100';
-            paginationHTML += `<button onclick="renderPilgrims(${i})" class="px-3 py-1 border border-gray-300 rounded-lg ${activeClass}">${i}</button>`;
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${p.package}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${riskColor}">${riskText}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="#" onclick="event.preventDefault(); viewDetails('${p.uid}')" class="text-primary hover:text-blue-700 font-semibold">Lihat Detail</a>
+                    </td>
+                `;
+                pilgrimList.appendChild(row);
+            });
         }
-        paginationHTML += '</div>';
-        controls.innerHTML = paginationHTML;
+
+        // Render Pagination
+        const paginationControls = document.getElementById('pagination-controls');
+        paginationControls.innerHTML = '';
+
+        if (totalPages > 1) {
+            let paginationHTML = `
+                <div>
+                    <p class="text-sm text-neutral">
+                        Menampilkan <span class="font-medium">${start + 1}</span> sampai <span class="font-medium">${Math.min(end, filteredPilgrims.length)}</span> dari <span class="font-medium">${filteredPilgrims.length}</span> jemaah
+                    </p>
+                </div>
+                <div class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button onclick="renderPilgrims(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}
+                        class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <button onclick="renderPilgrims(${i})"
+                        class="relative inline-flex items-center px-4 py-2 border text-sm font-medium 
+                        ${i === currentPage ? 'z-10 bg-primary border-primary text-white' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            paginationHTML += `
+                    <button onclick="renderPilgrims(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}
+                        class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            `;
+            paginationControls.innerHTML = paginationHTML;
+        }
     }
 
-    // --- Initial Execution on Load ---
-    document.addEventListener('DOMContentLoaded', () => renderPilgrims(1));
+    // Initial render
+    document.addEventListener('DOMContentLoaded', () => {
+        renderPilgrims(1);
+    });
 </script>
+
 </body>
 </html>
