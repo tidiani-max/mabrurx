@@ -406,7 +406,7 @@
             // Incident/Deceased Section 
             if (data.incident) {
                 const incidentText = data.incident
-                    .replace('Sudden respiratory failure (Mina). **Government Verified.**', 'Gagal napas mendadak (Mina). **Terverifikasi Pemerintah.**')
+                    .replace('Sudden respiratory failure (Mina). **Government Verified.**', 'Gagal napas mendadak (Mina). Terverifikasi Pemerintah.')
                     .replace('Government Verified', 'Terverifikasi Pemerintah');
                 
                 html += `<div class="p-3 mt-4 bg-gray-100 border-l-4 border-neutral"><p class="font-semibold text-gray-700">Laporan Insiden (Pengajuan Agensi):</p><p class="text-gray-600 text-sm">${incidentText}</p></div>`;
