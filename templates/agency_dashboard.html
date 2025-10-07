@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IBRI-Travel Agency Dashboard - MabrurX</title>
+    <title>Agency Dashboard - MabrurX</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -19,6 +19,7 @@
                         warning: '#F59E0B', // Orange for pending/medium risk
                         danger: '#EF4444',  // Red for high risk/deceased
                         official: '#7C3AED', // Added for clarity (Government document)
+                        tracker: '#3B82F6', // Blue-500 for the new tracker feature
                     }
                 }
             }
@@ -33,6 +34,9 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .progress-bar-fill {
+            transition: width 0.5s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-light font-sans antialiased">
@@ -61,14 +65,19 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="mb-8">
             <h2 class="text-3xl font-bold text-gray-900">Ikhtisar Manajemen Jemaah</h2>
-            
         </div>
 
         <section class="mb-12">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-primary">
                     <p class="text-sm font-medium text-neutral uppercase tracking-wide">Total Jemaah</p>
                     <p class="text-3xl font-bold text-gray-900 mt-1">20</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-tracker cursor-pointer"
+                    onclick="showKpiDetails('Kemajuan Ritual Harian (Target 70%)', 14, ['P001: 90% Selesai', 'P002: 40% (Tertunda)', 'P003: 100% Selesai', 'P012: 50% (Tertunda)'])">
+                    <p class="text-sm font-medium text-neutral uppercase tracking-wide">Ritual Harian (Rata-Rata)</p>
+                    <p class="text-3xl font-bold text-gray-900 mt-1 text-tracker">75%</p>
+                    <p class="text-xs text-neutral mt-2">Klik untuk progres detail</p>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-md border-l-4 border-danger cursor-pointer" 
                     onclick="showKpiDetails('Jemaah Berisiko Tinggi', 2, ['Jemaah P002 (Diabetes Kronis)', 'Jemaah P012 (Hipertensi, mobilitas terbatas)'])">
@@ -88,7 +97,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-4 sm:space-y-0">
             <div class="w-full sm:w-1/3">
                 <input type="text" id="search-input" onkeyup="renderPilgrims(1)" placeholder="Cari berdasarkan Nama atau UID..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
             </div>
             <div class="flex space-x-4">
                 <select id="filter-risk" onchange="renderPilgrims(1)" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
@@ -100,6 +109,11 @@
                     <option value="All">Filter Berdasarkan Status: Semua</option>
                     <option value="Active">Aktif</option>
                     <option value="Deceased">Meninggal</option>
+                </select>
+                <select id="filter-package" onchange="renderPilgrims(1)" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
+                    <option value="All">Filter Paket: Semua</option>
+                    <option value="Hajj">Haji</option>
+                    <option value="Umrah">Umrah</option>
                 </select>
             </div>
         </div>
@@ -116,6 +130,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Nama</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Usia</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Status Perjalanan</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-neutral uppercase tracking-wider">Tingkat Risiko</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-neutral uppercase tracking-wider">Tindakan</th>
                         </tr>
@@ -133,7 +148,7 @@
 
     <footer class="bg-primary text-white py-6 mt-12">
         <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-300">
-            <p>&copy; 2025 IBRI-Travel Agency. Ditenagai oleh MabrurX. Semua hak dilindungi. (Mode Presentasi)</p>
+            <p>&copy; 2025 IBRI-Travel Agency. Ditenagai oleh MabrurX. Semua hak dilindungi.</p>
         </div>
     </footer>
 
@@ -196,35 +211,35 @@
 </div>
 
 <script>
-    // --- Mock Data: 20 Pilgrims for IBRI-Travel ---
+    // --- Mock Data: 20 Pilgrims for IBRI-Travel (UPDATED) ---
     const MOCK_PILGRIMS = [
-        { uid: 'P001', name: 'Ahmad Mustofa', age: 45, risk: 'Low', status: 'Active', package: 'Hajj Reguler', contact: '08123456789' },
-        { uid: 'P002', name: 'Siti Fatimah Dewi', age: 62, risk: 'High', status: 'Active', package: 'Hajj Khusus', medical_note: 'Chronic Diabetes, requires daily checkup.' },
-        { uid: 'P003', name: 'Muhammad Alif', age: 31, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
-        { uid: 'P004', name: 'Nurul Huda', age: 50, risk: 'Low', status: 'Active', package: 'Hajj Khusus' },
-        { uid: 'P005', name: 'Joko Widodo', age: 48, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
-        { uid: 'P006', name: 'Dewi Lestari', age: 39, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
+        { uid: 'P001', name: 'Ahmad Mustofa', age: 45, risk: 'Low', status: 'Active', package: 'Hajj Reguler', package_type: 'Hajj', contact: '08123456789', sugar_level: 'A+', ritual_progress: 90, last_ritual: 'Tawaf Ifadah' },
+        { uid: 'P002', name: 'Siti Fatimah Dewi', age: 62, risk: 'High', status: 'Active', package: 'Hajj Khusus', package_type: 'Hajj', medical_note: 'Chronic Diabetes, requires daily checkup.', sugar_level: 'B', ritual_progress: 40, last_ritual: 'Struggling with Sa\'i' },
+        { uid: 'P003', name: 'Muhammad Alif', age: 31, risk: 'Low', status: 'Active', package: 'Umrah Basic', package_type: 'Umrah', sugar_level: 'A+', ritual_progress: 100, last_ritual: 'Completed Umrah' },
+        { uid: 'P004', name: 'Nurul Huda', age: 50, risk: 'Low', status: 'Active', package: 'Hajj Khusus', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 75, last_ritual: 'Throwing Pebbles' },
+        { uid: 'P005', name: 'Joko Widodo', age: 48, risk: 'Low', status: 'Active', package: 'Hajj Reguler', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 88, last_ritual: 'Wuquf in Arafah' },
+        { uid: 'P006', name: 'Dewi Lestari', age: 39, risk: 'Low', status: 'Active', package: 'Umrah Basic', package_type: 'Umrah', sugar_level: 'A+', ritual_progress: 95, last_ritual: 'Daily Dua/Zikr' },
         // P007 is the deceased pilgrim whose death certificate is available
-        { uid: 'P007', name: 'H. Zulkifli', age: 75, risk: 'High', status: 'Deceased', package: 'Hajj Khusus', incident: 'Sudden respiratory failure (Mina). **Government Verified.**' },
-        { uid: 'P008', name: 'Rina Sari', age: 29, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
-        { uid: 'P009', name: 'Bambang Susilo', age: 55, risk: 'Low', status: 'Active', package: 'Hajj Khusus' },
-        { uid: 'P010', name: 'Sri Mulyani', age: 60, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
-        { uid: 'P011', name: 'Andi Pratama', age: 33, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
-        { uid: 'P012', name: 'Hj. Aminah Yahya', age: 70, risk: 'High', status: 'Active', package: 'Hajj Khusus', medical_note: 'Hypertension, mobility limited.' },
-        { uid: 'P013', name: 'Faisal Akbar', age: 42, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
-        { uid: 'P014', name: 'Eka Putri', age: 25, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
-        { uid: 'P015', name: 'Heru Budiman', age: 58, risk: 'Low', status: 'Active', package: 'Hajj Khusus' },
-        { uid: 'P016', name: 'Linda Sari', age: 47, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
-        { uid: 'P017', name: 'Cahyo Wibowo', age: 36, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
-        { uid: 'P018', name: 'Irma Handayani', age: 53, risk: 'Low', status: 'Active', package: 'Hajj Khusus' },
-        { uid: 'P019', name: 'Kusuma Negara', age: 68, risk: 'Low', status: 'Active', package: 'Hajj Reguler' },
-        { uid: 'P020', name: 'Zahra Kemala', age: 41, risk: 'Low', status: 'Active', package: 'Umrah Basic' },
+        { uid: 'P007', name: 'H. Zulkifli', age: 75, risk: 'High', status: 'Deceased', package: 'Hajj Khusus', package_type: 'Hajj', sugar_level: 'B', incident: 'Sudden respiratory failure (Mina). **Government Verified.**', ritual_progress: 100, last_ritual: 'Completed Hajj' },
+        { uid: 'P008', name: 'Rina Sari', age: 29, risk: 'Low', status: 'Active', package: 'Hajj Reguler', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 60, last_ritual: 'Muzdalifah Stay' },
+        { uid: 'P009', name: 'Bambang Susilo', age: 55, risk: 'Low', status: 'Active', package: 'Hajj Khusus', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 80, last_ritual: 'Daily Dua/Zikr' },
+        { uid: 'P010', name: 'Sri Mulyani', age: 60, risk: 'Low', status: 'Active', package: 'Hajj Reguler', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 70, last_ritual: 'Daily Dua/Zikr' },
+        { uid: 'P011', name: 'Andi Pratama', age: 33, risk: 'Low', status: 'Active', package: 'Umrah Basic', package_type: 'Umrah', sugar_level: 'A+', ritual_progress: 100, last_ritual: 'Completed Umrah' },
+        { uid: 'P012', name: 'Hj. Aminah Yahya', age: 70, risk: 'High', status: 'Active', package: 'Hajj Khusus', package_type: 'Hajj', medical_note: 'Hypertension, mobility limited.', sugar_level: 'B', ritual_progress: 50, last_ritual: 'Daily Dua/Zikr' },
+        { uid: 'P013', name: 'Faisal Akbar', age: 42, risk: 'Low', status: 'Active', package: 'Hajj Reguler', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 92, last_ritual: 'Daily Dua/Zikr' },
+        { uid: 'P014', name: 'Eka Putri', age: 25, risk: 'Low', status: 'Active', package: 'Umrah Basic', package_type: 'Umrah', sugar_level: 'A+', ritual_progress: 100, last_ritual: 'Completed Umrah' },
+        { uid: 'P015', name: 'Heru Budiman', age: 58, risk: 'Low', status: 'Active', package: 'Hajj Khusus', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 85, last_ritual: 'Daily Dua/Zikr' },
+        { uid: 'P016', name: 'Linda Sari', age: 47, risk: 'Low', status: 'Active', package: 'Hajj Reguler', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 78, last_ritual: 'Daily Dua/Zikr' },
+        { uid: 'P017', name: 'Cahyo Wibowo', age: 36, risk: 'Low', status: 'Active', package: 'Umrah Basic', package_type: 'Umrah', sugar_level: 'A+', ritual_progress: 100, last_ritual: 'Completed Umrah' },
+        { uid: 'P018', name: 'Irma Handayani', age: 53, risk: 'Low', status: 'Active', package: 'Hajj Khusus', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 82, last_ritual: 'Daily Dua/Zikr' },
+        { uid: 'P019', name: 'Kusuma Negara', age: 68, risk: 'Low', status: 'Active', package: 'Hajj Reguler', package_type: 'Hajj', sugar_level: 'A+', ritual_progress: 73, last_ritual: 'Daily Dua/Zikr' },
+        { uid: 'P020', name: 'Zahra Kemala', age: 41, risk: 'Low', status: 'Active', package: 'Umrah Basic', package_type: 'Umrah', sugar_level: 'A+', ritual_progress: 100, last_ritual: 'Completed Umrah' },
     ];
 
     const ITEMS_PER_PAGE = 10;
     let currentPage = 1;
 
-    // --- Detail View Simulation Function (Updated for Document Link) ---
+    // --- Detail View Simulation Function (Updated) ---
     function viewDetails(uid) {
         const data = MOCK_PILGRIMS.find(p => p.uid === uid);
         const modalContent = document.getElementById('modalContent');
@@ -234,23 +249,54 @@
         } else {
             const statusColor = data.status === 'Deceased' ? 'text-danger' : 'text-primary';
             const riskColor = data.risk === 'High' ? 'text-danger' : 'text-success';
+            const sugarColor = data.sugar_level === 'B' ? 'text-warning' : 'text-success';
             
             // Terjemahkan Teks di Modal
             const statusText = data.status === 'Deceased' ? 'Meninggal' : 'Aktif';
             const riskText = data.risk === 'High' ? 'Tinggi' : 'Rendah';
             
+            let ritualStatus = '';
+            let ritualColor = data.ritual_progress < 50 ? 'bg-danger' : data.ritual_progress < 80 ? 'bg-warning' : 'bg-success';
+            let ritualBarWidth = `${data.ritual_progress}%`;
+
+            if (data.package_type === 'Hajj' || data.package_type === 'Umrah') {
+                ritualStatus = `
+                    <div class="p-3 mt-4 bg-gray-100 border-l-4 border-tracker">
+                        <p class="font-semibold text-tracker flex items-center"><i class="fas fa-route mr-2"></i> Progres Ritual Harian (${data.package_type}):</p>
+                        <p class="text-sm text-gray-700">Tingkat Penyelesaian: <span class="font-bold">${data.ritual_progress}%</span></p>
+                        <div class="mt-1 w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full ${ritualColor} progress-bar-fill" style="width: ${ritualBarWidth}"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Ritual Terakhir Dilacak: ${data.last_ritual}</p>
+                    </div>
+                `;
+            }
+
             let html = `
                 <p><strong>UID:</strong> <span class="text-gray-900">${data.uid}</span></p>
                 <p><strong>Nama:</strong> <span class="text-gray-900">${data.name}</span></p>
                 <p><strong>Usia:</strong> ${data.age}</p>
                 <p><strong>Status:</strong> <span class="${statusColor} font-semibold">${statusText}</span></p>
                 <p><strong>Tingkat Risiko:</strong> <span class="${riskColor} font-semibold">${riskText}</span></p>
-                <p><strong>Paket:</strong> ${data.package}</p>
+                <p><strong>Paket:</strong> ${data.package} (${data.package_type})</p>
+                <p><strong><i class="fas fa-syringe mr-1"></i> Kadar Gula (Darat Gula):</strong> <span class="${sugarColor} font-bold">${data.sugar_level}</span></p>
+                
+                ${ritualStatus}
             `;
             
-            if (data.medical_note) {
-                html += `<div class="p-3 mt-4 bg-red-50 border-l-4 border-danger"><p class="font-semibold text-danger">Catatan Medis:</p><p class="text-red-600 text-sm">${data.medical_note.replace('Chronic Diabetes, requires daily checkup.', 'Diabetes Kronis, memerlukan pemeriksaan harian.').replace('Hypertension, mobility limited.', 'Hipertensi, mobilitas terbatas.')}</p></div>`;
+            // Medical Note Section (Now includes medical_note and sugar_level consistency)
+            if (data.medical_note || data.sugar_level === 'B') {
+                const medicalDetail = data.medical_note 
+                    ? `<p class="text-red-600 text-sm">${data.medical_note.replace('Chronic Diabetes, requires daily checkup.', 'Diabetes Kronis, memerlukan pemeriksaan harian.').replace('Hypertension, mobility limited.', 'Hipertensi, mobilitas terbatas.')}</p>`
+                    : '';
+                const sugarWarning = data.sugar_level === 'B' 
+                    ? '<p class="text-sm text-red-600">Catatan: Kadar gula berada pada tingkat B, memerlukan pemantauan intensif.</p>'
+                    : '';
+
+                html += `<div class="p-3 mt-4 bg-red-50 border-l-4 border-danger"><p class="font-semibold text-danger"><i class="fas fa-notes-medical mr-1"></i> Catatan/Kondisi Medis:</p>${medicalDetail}${sugarWarning}</div>`;
             }
+            
+            // Incident/Deceased Section (Unchanged logic)
             if (data.incident) {
                 const incidentText = data.incident
                     .replace('Sudden respiratory failure (Mina). **Government Verified.**', 'Gagal napas mendadak (Mina). **Terverifikasi Pemerintah.**')
@@ -258,7 +304,6 @@
                 
                 html += `<div class="p-3 mt-4 bg-gray-100 border-l-4 border-neutral"><p class="font-semibold text-gray-700">Laporan Insiden (Pengajuan Agensi):</p><p class="text-gray-600 text-sm">${incidentText}</p></div>`;
                 
-                // **NEW: Check for government verified status to show the document button**
                 if (data.status === 'Deceased' && data.incident.includes('Government Verified')) {
                     html += `
                         <div class="mt-4 text-center">
@@ -278,27 +323,31 @@
         document.getElementById('detailModal').classList.remove('hidden');
     }
 
-    // --- KPI Details Simulation Function ---
+    // --- KPI Details Simulation Function (Unchanged) ---
     function showKpiDetails(title, count, detailsArray) {
         document.getElementById('kpiModalTitle').textContent = `${title} (${count} item)`;
         
         // Terjemahkan konten detail
         const translatedDetails = detailsArray.map(item => {
-             // Contoh terjemahan yang disederhanakan, pastikan semua kasus di-handle jika perlu
              return item
-                .replace('High Risk Pilgrims', 'Jemaah Berisiko Tinggi')
-                .replace('Reports Filed', 'Laporan Diajukan')
-                .replace('Chronic Diabetes', 'Diabetes Kronis')
-                .replace('limited mobility', 'mobilitas terbatas')
-                .replace('Death Report', 'Laporan Kematian')
-                .replace('Medical Emergency', 'Darurat Medis')
-                .replace('Location Alert', 'Peringatan Lokasi')
-                .replace('Document Submission', 'Pengajuan Dokumen')
-                .replace('Travel Itinerary Change', 'Perubahan Jadwal Perjalanan')
-                .replace('(Pending)', '(Tertunda)')
-                .replace('(Closed)', '(Ditutup)')
-                .replace('(Approved)', '(Disetujui)')
-                .replace('(GOV VERIFIED)', '(TERVERIFIKASI PEMERINTAH)');
+                 .replace('High Risk Pilgrims', 'Jemaah Berisiko Tinggi')
+                 .replace('Reports Filed', 'Laporan Diajukan')
+                 .replace('Chronic Diabetes', 'Diabetes Kronis')
+                 .replace('limited mobility', 'mobilitas terbatas')
+                 .replace('Death Report', 'Laporan Kematian')
+                 .replace('Medical Emergency', 'Darurat Medis')
+                 .replace('Location Alert', 'Peringatan Lokasi')
+                 .replace('Document Submission', 'Pengajuan Dokumen')
+                 .replace('Travel Itinerary Change', 'Perubahan Jadwal Perjalanan')
+                 .replace('(Pending)', '(Tertunda)')
+                 .replace('(Closed)', '(Ditutup)')
+                 .replace('(Approved)', '(Disetujui)')
+                 .replace('(GOV VERIFIED)', '(TERVERIFIKASI PEMERINTAH)')
+                 // New ritual tracking translations
+                 .replace('Completed Hajj', 'Haji Selesai')
+                 .replace('Completed Umrah', 'Umrah Selesai')
+                 .replace('Struggling with Sa\'i', 'Kesulitan Sa\'i')
+                 .replace('Struggling with Tawaf', 'Kesulitan Tawaf');
         });
         
         document.getElementById('kpiModalContent').innerHTML = `
@@ -310,9 +359,8 @@
         document.getElementById('kpiModal').classList.remove('hidden');
     }
     
-    // --- Government Document Simulation (Updated to inject name/uid) ---
+    // --- Government Document Simulation (Unchanged) ---
     function showDocumentModal(uid, name) {
-        // Set document details based on the pilgrim data
         document.getElementById('doc-uid').textContent = uid;
         document.getElementById('doc-name').textContent = name;
         
@@ -320,13 +368,14 @@
         document.getElementById('documentModal').classList.remove('hidden');
     }
 
-    // --- Main Rendering Function (Includes Filter, Search, Pagination) ---
+    // --- Main Rendering Function (Includes Filter, Search, Pagination) (UPDATED) ---
     function renderPilgrims(page) {
         currentPage = page;
         const pilgrimList = document.getElementById('pilgrim-list');
         const searchInput = document.getElementById('search-input').value.toLowerCase();
         const filterRisk = document.getElementById('filter-risk').value;
         const filterStatus = document.getElementById('filter-status').value;
+        const filterPackage = document.getElementById('filter-package').value; // NEW FILTER
         const noResults = document.getElementById('no-results');
 
         // 1. FILTERING & SEARCHING
@@ -334,7 +383,10 @@
             const nameMatch = p.name.toLowerCase().includes(searchInput) || p.uid.toLowerCase().includes(searchInput);
             const riskMatch = filterRisk === 'All' || p.risk === filterRisk;
             const statusMatch = filterStatus === 'All' || p.status === filterStatus;
-            return nameMatch && riskMatch && statusMatch;
+            // NEW FILTER LOGIC
+            const packageMatch = filterPackage === 'All' || p.package_type === filterPackage;
+            
+            return nameMatch && riskMatch && statusMatch && packageMatch;
         });
 
         // Show/hide no results message
@@ -358,6 +410,7 @@
         const pilgrimHTML = pilgrimsToShow.map(pilgrim => {
             const riskColorClass = pilgrim.risk === 'High' ? 'text-danger font-semibold' : 'text-success';
             const statusColorClass = pilgrim.status === 'Deceased' ? 'text-danger font-semibold' : 'text-primary';
+            const packageColorClass = pilgrim.package_type === 'Hajj' ? 'text-blue-700' : 'text-green-700';
             
             const statusText = pilgrim.status === 'Deceased' ? 'Meninggal' : 'Aktif';
             const riskText = pilgrim.risk === 'High' ? 'Tinggi' : 'Rendah';
@@ -368,6 +421,7 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${pilgrim.name}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${pilgrim.age}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm ${statusColorClass}">${statusText}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm ${packageColorClass} font-medium">${pilgrim.package_type}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm ${riskColorClass}">${riskText}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <a href="#" 

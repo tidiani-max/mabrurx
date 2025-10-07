@@ -30,6 +30,7 @@ urlpatterns = [
     
     # 2. Backend API Route (Handles POST request from the form submission)
     path('api/report/death/<str:pilgrim_uid>/', views.register_death_report, name='api_register_death_report'),
+    path('api/government/data/', views.government_dashboard, name='api_government_data'),
     
     # Pilgrim endpoints
     path('api/pilgrims/register/', views.register_pilgrim, name='api_register_pilgrim'),
